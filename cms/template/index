@@ -1,0 +1,192 @@
+{% use '_layout' %}
+{% from '_functions' import size, checkExtension, paging %}
+
+{% set title = 'Trang chủ' %}
+{{block('header')}}
+
+{# THIẾT LẬP #}
+  {% set table_name = 'ipfs' %}
+  {% set maxFileSizeAllow = 100000000 %} {# Kích thước file tối đa cho phép upload #}
+  {% set API_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDI4ZjRFNDJEYjMxQWRiODdFYjQ3M2I2NmJjNjI1MTJlMzE4OEVGMjAiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNzUxODc3NDE4MCwibmFtZSI6IkRvcmV3In0._fktZLU7Uj0o3cJgPLlSJOBX3ajw2i-yUQxUfsTi1Yw" %}
+{# END THIẾT LẬP #}
+
+{#==================================================================================#}
+
+{# IMPORT DATA #}
+  {% if request_method()|lower == 'post' %}
+    {% if get_post('filename')!=null and get_post('filesize')!=null %}
+      {% set array_row = {"time":"now"|date('U'),"filename":get_post('filename'),"filesize":get_post( 'filesize'),"CID":get_post('fileCID'), "password":get_post('filepassword')|url_encode,"passphrase":get_post('passphrase')|url_encode, "ip":ip(),"user_agent":user_agent()} %}
+      {% do insert_row_array_table(table_name, array_row) %}
+      <div class="gmenu"><i class="fa fa-check-circle" aria-hidden="true"></i> Tải lên thành công</div>
+      {{redirect('/')}}
+    {% endif %} 
+  {% endif %} 
+{# END IMPORT #}
+
+{#==================================================================================#}
+
+{# FORM UPLOAD #}
+<div class="phdr"><i class="fa fa-cloud-upload" aria-hidden="true"></i> Upload File ({{size(maxFileSizeAllow)}})</div>
+<div class="menu" style="text-align:center;">
+  <form id="form" method="post" action="">
+    <div style="margin: 5px;" id="dai"></div>
+    <input id="uploadfile" type="file" name="file"/> <br />
+    <i class="fa fa-lock" aria-hidden="true"></i> Mật khẩu: 
+    <input id="filepassword" type="password" name="filepassword"> <br />
+    <input id="filename" name="filename" type="hidden" value="">
+    <input id="filesize" name="filesize" type="hidden" value="">
+    <input id="fileCID" name="fileCID" type="hidden" value="">
+    <input id="passphrase" name="passphrase" type="hidden" value="{{ random() }}{{ random() }}">
+    <input type="button" id="btnUpload" style="margin: 1%;; padding: 12px 25px; font-size: 16px;" class="button" value="Upload" onclick="frUpload()">
+    <br/>
+  </form>
+</div>
+
+<script>
+    const encpassphrase = document.getElementById('passphrase').value;
+  	console.log(encpassphrase);
+
+function readfile(e){return new Promise(((r,a)=>{var n=new FileReader;n.onload=()=>{r(n.result)},n.readAsArrayBuffer(e)}))}
+
+async function frUpload() {
+    const form = document.getElementById("form");
+    const file = form.file.files[0];
+
+    if(file == null){
+      alert("Vui lòng chọn file!");
+      return;
+    };
+  
+    if(file.size > {{maxFileSizeAllow}}){
+      alert("File lớn hơn mức cho phép!");
+      this.value = "";
+      return;
+    };
+  	document.getElementById('filesize').value = file.size;
+  	document.getElementById('filename').value = file.name;
+    document.getElementById('btnUpload').style.visibility = "hidden";
+
+
+    var d1 = document.getElementById('dai');
+    d1.insertAdjacentHTML('beforeend', '<img src="https://i.imgur.com/1TyFaOM.gif" />');
+
+    var filepassword = '';
+    if(document.getElementById('filepassword').value != '')
+    {
+      filepassword = document.getElementById('filepassword').value;
+    }
+  
+		var plaintextbytes=await readfile(file)
+		.catch(function(err){
+			console.error(err);
+		});	
+		var plaintextbytes=new Uint8Array(plaintextbytes);
+
+		var pbkdf2iterations=10000;
+		var passphrasebytes=new TextEncoder("utf-8").encode(encpassphrase);
+		var pbkdf2salt=window.crypto.getRandomValues(new Uint8Array(8));
+
+		var passphrasekey=await window.crypto.subtle.importKey('raw', passphrasebytes, {name: 'PBKDF2'}, false, ['deriveBits'])
+		.catch(function(err){
+			console.error(err);
+		});
+		console.log('passphrasekey imported');
+
+		var pbkdf2bytes=await window.crypto.subtle.deriveBits({"name": 'PBKDF2', "salt": pbkdf2salt, "iterations": pbkdf2iterations, "hash": 'SHA-256'}, passphrasekey, 384)		
+		.catch(function(err){
+			console.error(err);
+		});
+		console.log('pbkdf2bytes derived');
+		pbkdf2bytes=new Uint8Array(pbkdf2bytes);
+
+		keybytes=pbkdf2bytes.slice(0,32);
+		ivbytes=pbkdf2bytes.slice(32);
+
+		var key=await window.crypto.subtle.importKey('raw', keybytes, {name: 'AES-CBC', length: 256}, false, ['encrypt']) 
+		.catch(function(err){
+			console.error(err);
+		});
+		console.log('key imported');		
+
+		var cipherbytes=await window.crypto.subtle.encrypt({name: "AES-CBC", iv: ivbytes}, key, plaintextbytes)
+		.catch(function(err){
+			console.error(err);
+		});
+
+		if(!cipherbytes) {
+		 	console.log('Error encrypting file.  See console log.');
+			return;
+		}
+
+		console.log('plaintext encrypted');
+		cipherbytes=new Uint8Array(cipherbytes);
+
+		var resultbytes=new Uint8Array(cipherbytes.length+16)
+		resultbytes.set(new TextEncoder("utf-8").encode('Salted__'));
+		resultbytes.set(pbkdf2salt, 8);
+		resultbytes.set(cipherbytes, 16);
+
+		var blob=new Blob([resultbytes], {type: 'application/download'});
+
+
+        fetch("https://api.nft.storage/upload", {
+            method: "post",
+            headers: {
+                Authorization: "Bearer {{API_key}}"
+            },
+            body: blob
+        }).then(data => data.json()).then(data => {
+            console.log(data.value.cid);
+            document.getElementById('fileCID').value = data.value.cid;
+            document.getElementById("form").submit();
+        })  
+}    
+</script>
+{# END FORM #}
+
+{#==================================================================================#}
+
+{# FILE LIST #}
+  {% set total = get_table_count(table_name) %}
+  {% set per = 10 %}
+  {% set getAllFileSize = 0 %}
+  {% for get in select_table_data(table_name) %}
+    {% if get.time %}
+      {% set getAllFileSize = getAllFileSize + get.filesize %}
+    {% endif %}
+  {% endfor %}
+  {% set page_max = total//per %}
+  {% if total//per != total/per %}
+    {% set page_max = total//per+1 %}
+  {% endif %}
+  {% set url = get_uri_segments() %}
+  {% set p = url[1]|default(1) %}
+  {% if p matches '/[a-zA-z]|%/' or p<1 %}
+    {% set p=1 %}
+  {% endif %}
+  {% if p > page_max %}
+    {% set p = page_max %}
+  {% endif %}
+  {% set st = p*per-per %}
+
+  <div class="phdr"><i class="fa fa-circle-o-notch fa-spin fa-fw"></i>Danh sách file <sapn style="color:red">({{total}})</span><span style="color:black"><small> {{size(getAllFileSize)}}</small></span><a href="/search" style="float:right" title="Tìm"><button type="submit" name="submit"><i class="fa fa-search" aria-hidden="true"></i> Tìm</button></a></div>
+  {% if total == '0' %}
+    <div class="list1"><i class="fa fa-square-o" aria-hidden="true"></i> Chưa có file nào được upload.</div>
+  {% else %}
+    {% for file in select_table_data(table_name, 'time', 'desc')|slice(st,per) %}
+      {% if file.time %}
+        <div class="list1">
+          <i class="fa fa-{{checkExtension(file.filename)}}" aria-hidden="true"></i>{% if file.password != null %} <i class="fa fa-lock" aria-hidden="true"></i>{% endif %}
+          <a href="/view/{{file.id}}"><b>{{file.filename}}</b></a> ({{size(file.filesize)}})
+        </div>
+      {% endif %}
+    {% endfor %}
+    {{paging('index/',p,page_max)}}
+  {% endif %}
+{# END LIST #}
+
+<div class="phdr"><b><i class="fa fa-plane" aria-hidden="true"></i>  Liên kết</b></div>
+<div class="list1"><a href="https://dorew.gq"><i class="fa fa-link" aria-hidden="true"></i> Dorew.gq</a></div>
+<div class="list1"><a href="https://raye.gq"><i class="fa fa-link" aria-hidden="true"></i> Raye.gq</a></div>
+
+{{block('footer')}}

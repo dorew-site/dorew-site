@@ -1,0 +1,16 @@
+{% set table_name = 'ipfs' %}
+{% if get_table_count(table_name) == '0' %}
+{% else %}
+[
+  {% for file in select_table_data(table_name) %}
+    {% if file.id %}
+    {
+      "title"    : "{{file.filename}}",
+      "url"      : "/view/{{file.id}}",
+      "duoi"      : "{{file.filename|split('.')|last}}"
+    }{% if loop.last==false %}, {% endif %}
+    {% endif %}
+  {% endfor %}
+
+]
+{% endif %}

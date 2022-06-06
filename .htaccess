@@ -1,0 +1,8 @@
+<ifModule mod_rewrite.c>
+RewriteEngine On
+## Application Handler
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)?$ index.php	[QSA,NC,L]
+</ifModule>
+RewriteRule ^cms/template/(.*)$ index.php [L]

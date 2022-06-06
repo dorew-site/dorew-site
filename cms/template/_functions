@@ -1,0 +1,165 @@
+{% macro page(page,page_max,url) %} {% if page_max>1 %}
+<div class="paging">
+  {% if page>3 %}<a href="{{url}}1">1</a>{% endif %}  
+  {% if page>4 %} <span>..</span>{% endif %}
+  {% if (page-2)>0 %}<a href="{{url~(page-2)}}">{{(page-2)}}</a>{% endif %}
+  {% if (page-1)>0 %}<a href="{{url~(page-1)}}">{{(page-1)}}</a>{% endif %}
+  {% if page_max>1 %}<a class="active">{{page}}</a>{% endif %}
+  {% if (page+1)<=page_max %}<a href="{{url~(page+1)}}">{{(page+1)}}</a>{% endif %}
+  {% if (page+2)<=page_max %}<a href="{{url~(page+2)}}">{{(page+2)}}</a>{% endif %}
+  {% if page<(page_max-3) %}<a href="#">..</a>{% endif %}
+  {% if page<(page_max-2) %}<a href="{{url~(page_max)}}">{{(page_max)}}</a>{% endif %}
+</div>{% endif %}
+{% endmacro %}
+
+{#===========================================================================================================#}
+
+{% macro time(time) %}{% spaceless %}
+{% set ss=("now"|date("U"))-time %}
+{% if ss==0 %}
+Vừa xong
+{% elseif ss>31622400 %}
+{{(ss/31622400)|round(0,'ceil')}} năm trước
+{% elseif ss>2592000 %}
+{{(ss/2592000)|round(0,'ceil')}} tháng trước
+{% elseif ss>86400 %}
+{{(ss/86400)|round(0,'ceil')}} ngày trước
+{% elseif ss>3600 %}
+{{(ss/3600)|round(0,'ceil')}} giờ trước
+{% elseif ss>60 %}
+{{(ss/60)|round(0,'ceil')}} phút trước
+{% else %}
+{{ss}} giây trước
+{% endif %}
+{% endspaceless %}{% endmacro %} 
+
+{#===========================================================================================================#}
+
+{% macro paging(trang,p,max,b) %}
+    {% if max > 1 %}
+<center><div class="topmenu"><div class="pagination">
+ {# set p=pagination.current_page %} {% set max=pagination.pages|last #}
+{% set a='<a class="pagenav" href="/'~trang~'' %}
+ {% if p>max %}{% set p=max %}a{% endif %}
+ {% if p>1 %}
+{{a|raw}}{{p-1}}{{b}}">«</a>
+{% endif %}
+{% if p>3 %}
+{{a|raw}}1{{b}}">1</a>
+{% endif %}
+{% if p>4 %}
+<span>...</span>
+{% endif %}
+{% if p>2 %}
+{{a|raw}}{{p-2}}{{b}}">{{p-2}}</a>
+{% endif %}
+{% if p>1 %}
+{{a|raw}}{{p-1}}{{b}}">{{p-1}}</a>
+{% endif %}
+<span class="currentpage"><b>{{p}}</b></span>
+{% if p<max-1 %}
+{{a|raw}}{{p+1}}{{b}}">{{p+1}}</a>
+{% endif %}
+{% if p<max-2 %}
+{{a|raw}}{{p+2}}{{b}}">{{p+2}}</a>
+{% endif %}
+{% if p<max-3 %}
+<span>...</span>
+{% endif %}
+{% if p<max %}
+{{a|raw}}{{max}}{{b}}" class="next">{{max}}</a>
+{% endif %}
+{% if p<max %}
+{{a|raw}}{{p+1}}{{b}}">»</a>
+{% endif %}
+
+</div></div></center>
+    {% endif %}
+{% endmacro %}
+
+{#===========================================================================================================#}
+
+{% macro size(byte) %}{% if byte >= '1073741824' %}{% set show = (byte|trim/1073741824)|round(2,'floor')~' GB' %}{% elseif byte >= '1048576' %}{% set show = (byte|trim/1048576)|round(2,'floor')~' MB' %}{% elseif byte >= '1024' %}{% set show = (byte|trim/1024)|round(2,'floor')~' Kb' %}{% else %}{% set show = byte~' byte' %}{% endif %}{{show}}{% endmacro %}
+
+{#===========================================================================================================#}
+
+{% macro checkExtension(one) %}
+{% set one = one|lower%}
+{% if one|split('.')|last == 'jpg' or  one|split('.')|last == 'png' or  one|split('.')|last == 'jpeg' or one|split('.')|last == 'webp' or one|split('.')|last == 'gif' or one|split('.')|last == 'psd' or one|split('.')|last == 'heic' %}file-image-o{% elseif one|split('.')|last == 'mp4' or  one|split('.')|last == 'mkv' or one|split('.')|last == 'webm' or one|split('.')|last == 'flv' or one|split('.')|last == '3gp' %}file-video-o{% elseif one|split('.')|last == 'mp3' or  one|split('.')|last == 'mkv' or one|split('.')|last == 'm4a' or one|split('.')|last == 'flac' or one|split('.')|last == 'wav' %}file-audio-o{% elseif one|split('.')|last == 'docx' or  one|split('.')|last == 'doc' or one|split('.')|last == 'txt' or one|split('.')|last == 'md' or one|split('.')|last == 'odt' %}file-text-o{% elseif one|split('.')|last == 'txt' or one|split('.')|last == 'md' %}file-text-o{% elseif one|split('.')|last == 'docx' or one|split('.')|last == 'doc' or one|split('.')|last == 'odt' %}file-word-o{% elseif one|split('.')|last == 'xls' or one|split('.')|last == 'xlsx' %}file-excel-o{% elseif one|split('.')|last == 'ppt' or one|split('.')|last == 'pptx' %}file-powerpoint-o{% elseif one|split('.')|last == 'pdf' %}file-pdf-o{% elseif one|split('.')|last == 'zip' or one|split('.')|last == 'rar' or one|split('.')|last == '7z' or one|split('.')|last == 'tar' %}file-archive-o{% elseif one|split('.')|last == 'cpp' or one|split('.')|last == 'cs' or one|split('.')|last == 'php' or one|split('.')|last == 'html' or one|split('.')|last == 'js' or one|split('.')|last == 'py' %}file-code-o{% elseif one|split('.')|last == 'sql' %}database{% else %}file-o{% endif %}
+{% endmacro %}
+
+{#===========================================================================================================#}
+
+{% macro showFileInfo(table_name,fileID) %} {# Hiển thị thông tin file #}
+  {% set file = select_table_row_data(table_name, 'id', fileID) %}
+<div class="phdr"><i class="fa fa-{{_self.checkExtension(file.filename)}}" aria-hidden="true"></i> {{file.filename}}</div>
+<div  class="menu">
+  <center>
+    <div style="margin: 5px;" id="dai"></div>
+    <div style="padding: 15px; max-width: 500px; visibility: hidden;">
+      {% if _self.checkExtension(file.filename) =="file-image-o" %}
+	<img id="ipreview" style="max-width: 100%;" width="400" src="" />
+      {% elseif _self.checkExtension(file.filename) =="file-video-o" or _self.checkExtension(file.filename) =="file-audio-o" %}
+      <video  style="max-width: 100%;"  width="400" controls>
+        <source src="" type="video/mp4">
+      </video>
+    {% endif %}
+  </div>
+    
+    
+  <p>
+    <i class="fa fa-info-circle" aria-hidden="true"></i> {{_self.size(file.filesize)}} - 
+    <i class="fa fa-clock-o" aria-hidden="true"></i> {{file.time|date('H:i:s d/m/y',"Asia/Ho_Chi_Minh")}}<br/>
+  </p>
+
+    {% if _self.checkExtension(file.filename) =="file-image-o" %}
+		<button style="margin: 5px; padding: 12px 25px; font-size: 16px;" onclick="previewImg('{{file.filename}}', '{{file.CID}}', '{{file.passphrase}}')"><b><i class="fa fa-play-circle"></i> Preview</b></button>
+    {% elseif _self.checkExtension(file.filename) =="file-video-o" or _self.checkExtension(file.filename) =="file-audio-o" %}
+		<button style="margin: 5px; padding: 12px 25px; font-size: 16px;" onclick="previewVideoURL('{{file.filename}}', '{{file.CID}}', '{{file.passphrase}}')"><b><i class="fa fa-play-circle"></i> Preview</b></button>
+    {% endif %}
+    <button style="margin: 5px; padding: 12px 25px; font-size: 16px;" onclick="downloadURL('{{file.filename}}', '{{file.CID}}', '{{file.passphrase}}')"><b><i class="fa fa-download"></i> Download</b></button>
+  <br/>
+    <br/>
+  </center>
+</div>
+
+{#==================================================================================#}
+
+<div class="phdr"><i class="fa fa-share-alt-square" aria-hidden="true"></i> Chia sẻ</div>
+<div class="menu">
+  
+{#================================================#}
+
+<table style="border: none;">
+  <tr>
+    <td>Link</td>
+    <td><input type="text" value="{{current_url()}}"></td>
+  </tr>
+  <tr>
+    <td>BBCode</td>
+    <td><input type="text" value="[url={{current_url()}}]{{file.filename}}[/url]"></td>
+  </tr>
+  <tr>
+    <td>Markdown</td>
+    <td><input type="text" value="[{{file.filename}}]({{current_url()}})"></td>
+  </tr>
+</table>
+
+  
+{#================================================#} 
+  
+</div>
+
+
+<script>
+function readfile(n){return new Promise((e,t)=>{var o=new FileReader;o.onload=()=>{e(o.result)},o.readAsArrayBuffer(n)})}async function decryptfile(e,t,o){var n=await readfile(e).catch(function(e){console.error(e)}),r=new Uint8Array(n),e=new TextEncoder("utf-8").encode(o),n=r.slice(8,16),e=await window.crypto.subtle.importKey("raw",e,{name:"PBKDF2"},!1,["deriveBits"]).catch(function(e){console.error(e)});console.log("passphrasekey imported");e=await window.crypto.subtle.deriveBits({name:"PBKDF2",salt:n,iterations:1e4,hash:"SHA-256"},e,384).catch(function(e){console.error(e)});console.log("pbkdf2bytes derived"),e=new Uint8Array(e),keybytes=e.slice(0,32),ivbytes=e.slice(32),r=r.slice(16);e=await window.crypto.subtle.importKey("raw",keybytes,{name:"AES-CBC",length:256},!1,["decrypt"]).catch(function(e){console.error(e)});console.log("key imported");r=await window.crypto.subtle.decrypt({name:"AES-CBC",iv:ivbytes},e,r).catch(function(e){console.error(e)});console.log("ciphertext decrypted"),r=new Uint8Array(r);r=new Blob([r],{type:"application/download"});console.log(t),console.log(o);const c=document.createElement("a");c.href=URL.createObjectURL(r),c.download=t,c.click()}async function downloadURL(t,e,o){document.getElementById("dai").insertAdjacentHTML("beforeend",'<img src="https://i.imgur.com/1TyFaOM.gif" />'),fetch("https://cloudflare-ipfs.com/ipfs/"+e).then(e=>e.blob()).then(e=>{decryptfile(e,t,o),document.getElementById("dai").innerHTML=""}).catch(console.error)}
+
+{% if _self.checkExtension(file.filename) =="file-video-o" or _self.checkExtension(file.filename) =="file-audio-o" %}
+async function decryptfileVideo(e,t,o){var i=await readfile(e).catch(function(e){console.error(e)}),c=new Uint8Array(i),e=new TextEncoder("utf-8").encode(o),i=c.slice(8,16),e=await window.crypto.subtle.importKey("raw",e,{name:"PBKDF2"},!1,["deriveBits"]).catch(function(e){console.error(e)});console.log("passphrasekey imported");e=await window.crypto.subtle.deriveBits({name:"PBKDF2",salt:i,iterations:1e4,hash:"SHA-256"},e,384).catch(function(e){console.error(e)});console.log("pbkdf2bytes derived"),e=new Uint8Array(e),keybytes=e.slice(0,32),ivbytes=e.slice(32),c=c.slice(16);e=await window.crypto.subtle.importKey("raw",keybytes,{name:"AES-CBC",length:256},!1,["decrypt"]).catch(function(e){console.error(e)});console.log("key imported");c=await window.crypto.subtle.decrypt({name:"AES-CBC",iv:ivbytes},e,c).catch(function(e){console.error(e)});console.log("ciphertext decrypted"),c=new Uint8Array(c);c=new Blob([c],{type:"application/download"});console.log(t),console.log(o);o=document.querySelector("video"),c=window.URL.createObjectURL(c);o.src=c,o.style.visibility="visible"}async function previewVideoURL(t,e,o){document.getElementById("dai").insertAdjacentHTML("beforeend",'<img src="https://i.imgur.com/1TyFaOM.gif" />'),fetch("https://cloudflare-ipfs.com/ipfs/"+e).then(e=>e.blob()).then(e=>{decryptfileVideo(e,t,o),document.getElementById("dai").innerHTML=""}).catch(console.error)}
+{% endif %}
+
+{% if _self.checkExtension(file.filename) =="file-image-o" %}
+async function decryptfileImg(e,t,o){var n=await readfile(e).catch(function(e){console.error(e)}),c=new Uint8Array(n),e=new TextEncoder("utf-8").encode(o),n=c.slice(8,16),e=await window.crypto.subtle.importKey("raw",e,{name:"PBKDF2"},!1,["deriveBits"]).catch(function(e){console.error(e)});console.log("passphrasekey imported");e=await window.crypto.subtle.deriveBits({name:"PBKDF2",salt:n,iterations:1e4,hash:"SHA-256"},e,384).catch(function(e){console.error(e)});console.log("pbkdf2bytes derived"),e=new Uint8Array(e),keybytes=e.slice(0,32),ivbytes=e.slice(32),c=c.slice(16);e=await window.crypto.subtle.importKey("raw",keybytes,{name:"AES-CBC",length:256},!1,["decrypt"]).catch(function(e){console.error(e)});console.log("key imported");c=await window.crypto.subtle.decrypt({name:"AES-CBC",iv:ivbytes},e,c).catch(function(e){console.error(e)});console.log("ciphertext decrypted"),c=new Uint8Array(c);c=new Blob([c],{type:"application/download"});console.log(t),console.log(o);o=document.getElementById("ipreview"),c=window.URL.createObjectURL(c);o.src=c,o.style.visibility="visible"}async function previewImg(t,e,o){document.getElementById("dai").insertAdjacentHTML("beforeend",'<img src="https://i.imgur.com/1TyFaOM.gif" />'),fetch("https://cloudflare-ipfs.com/ipfs/"+e).then(e=>e.blob()).then(e=>{decryptfileImg(e,t,o),document.getElementById("dai").innerHTML=""}).catch(console.error)}
+{% endif %}
+</script>
+{% endmacro %}

@@ -1,0 +1,46 @@
+{% use '_layout' %}
+{% from '_functions' import size, checkExtension, showFileInfo %}
+
+{# THIẾT LẬP #}
+  {% set table_name = 'ipfs' %}
+{# END THIẾT LẬP #}
+
+{% set uri = get_uri_segments () %}
+{% set fileID = uri[1] %}
+{% set data = select_table_row_data(table_name, 'id', fileID) %}
+{% if data.id %}
+  {% set title = 'Xem file: '~data.filename %}
+{% else %}
+  {% set title = 'Lỗi' %}
+{% endif %}
+
+{{block('header')}}
+
+{% if data.id %}
+  {% if password != null %}
+    {% if get_get('mk') == data.password %}
+      {{showFileInfo(table_name,fileID)}}
+    {% else %}
+      {% if get_get('mk') %}
+        <script>alert("Sai mật khẩu!");</script>
+      {% endif %}
+      <div class="phdr"><i class="fa fa-lock" aria-hidden="true"></i>  {{data.filename}}</div>
+      <div  class="menu" style="text-align: center">
+        <form action="/view/{{fileID}}/">
+          Nhập mật khẩu: <br/>
+          <input type="password" name="mk" value="">
+          <button type="submit">Xác nhận</button>
+        </form>
+      </div>
+    {% endif %}
+  {% else %}
+    {{showFileInfo(table_name,fileID)}}
+  {% endif %}
+{% else %}
+  <div class="phdr"><i class="fa fa-ban" aria-hidden="true"></i> Lỗi! </div>
+  <div class="menu" style="text-align: center">
+    <img src="https://i.imgur.com/V1alq6F.jpg" height="50%" width="50%">
+  </div>
+{% endif %}
+
+{{block('footer')}}
