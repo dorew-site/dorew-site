@@ -47,17 +47,12 @@ namespace astute\CodeIgniterDB;
  *
  * @param string $params
  * @param null   $query_builder_override
- * @param null   $conn_id
+ * @param null   $db_id
  *
  * @return mixed
  */
-function &DB($params = '', $query_builder_override = NULL, $conn_id = NULL)
+function &DB($params = '', $query_builder_override = NULL, $db_id = NULL)
 {
-
-    // No DB specified yet? Beat them senseless...
-    if (empty($params['dbdriver'])) {
-        die('You have not selected a database type to connect to.');
-    }
 
     // Load the DB classes. Note: Since the query builder class is optional
     // we need to dynamically create a class that extends proper parent class
@@ -74,7 +69,7 @@ function &DB($params = '', $query_builder_override = NULL, $conn_id = NULL)
 
     require_once(dirname(__FILE__) . '/DB_driver.php');
 
-    if (!isset($query_builder) OR $query_builder === TRUE) {
+    if (!isset($query_builder) or $query_builder === TRUE) {
         require_once(dirname(__FILE__) . '/DB_query_builder.php');
         if (!class_exists(__NAMESPACE__ . '\CI_DB', FALSE)) {
             /**
@@ -99,27 +94,16 @@ function &DB($params = '', $query_builder_override = NULL, $conn_id = NULL)
     }
 
     // Load the DB driver
-    $driver_file = dirname(__FILE__) . '/drivers/' . $params['dbdriver'] . '/' . $params['dbdriver'] . '_driver.php';
+    $driver_file = dirname(__FILE__) . '/mysqli/mysqli_driver.php';
 
-    file_exists($driver_file) OR die('Invalid DB driver');
+    file_exists($driver_file) or die('Invalid DB driver');
     require_once($driver_file);
 
     // Instantiate the DB adapter
-    $driver = '\astute\CodeIgniterDB\CI_DB_' . $params['dbdriver'] . '_driver';
+    $driver = '\astute\CodeIgniterDB\CI_DB_mysqli_driver';
     $DB     = new $driver($params);
 
-    // Check for a subdriver
-    if (!empty($DB->subdriver)) {
-        $driver_file = dirname(__FILE__) . '/drivers/' . $DB->dbdriver . '/subdrivers/' . $DB->dbdriver . '_' . $DB->subdriver . '_driver.php';
-
-        if (file_exists($driver_file)) {
-            require_once($driver_file);
-            $driver = 'CI_DB_' . $DB->dbdriver . '_' . $DB->subdriver . '_driver';
-            $DB     = new $driver($params);
-        }
-    }
-
-    $DB->initialize($conn_id);
+    $DB->initialize($db_id);
 
     return $DB;
 }

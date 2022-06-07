@@ -15,7 +15,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/config.php';
 require_once $root . '/cms/layout/func.php';
 
 $uri_segments = explode('/', $request_uri);
-if (!$conn && $uri_segments[1] != 'cms' && !in_array($uri_segments[2], ['index.php', '', null])) {
+if (!$db && $uri_segments[1] != 'cms' && !in_array($uri_segments[2], ['index.php', '', null])) {
     header('Location: /cms');
     exit();
 }
@@ -55,6 +55,6 @@ if (!$conn && $uri_segments[1] != 'cms' && !in_array($uri_segments[2], ['index.p
         <br>Dorew - Thích Ngao Du
     </div>
     <?php
-    if (is_login() && $conn) {
+    if (is_login() && $db) {
         echo '<div class="phdr" style="text-align: center;" id="head"><a href="/cms"><i class="fa fa-home fa-lg" aria-hidden="true"></i></a> • <a href="'. $url_phpmyadmin .'"><i class="fa fa-database fa-lg" aria-hidden="true"></i></a>  • <a href="/cms?act=logout"><i class="fa fa-sign-out fa-lg" aria-hidden="true"></i></a></div>';
     }

@@ -15,7 +15,7 @@ ini_set('display_errors', 0);
 require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/config.php';
 include $root . '/cms/layout/header.php';
 
-if (!$conn) {
+if (!$db) {
     if ($_GET['act'] == 'install') {
         echo '<div class="phdr"><b><i class="fa fa-cog" aria-hidden="true"></i> Cấu hình</b></div>
         <style>input{width:60%}</style>';
@@ -38,8 +38,8 @@ if (!$conn) {
             $new_db_info = str_replace('$account_admin = \'' . $account_admin . '\';', '$account_admin = \'' . $admin_user . '\';', $new_db_info);
             $new_db_info = str_replace('$password_admin = \'' . $password_admin . '\';', '$password_admin = \'' . $admin_pass . '\';', $new_db_info);
             //check if database infomation is correct
-            $conn_new = mysqli_connect($new_db_host, $new_db_user, $new_db_pass, $new_db_name);
-            if (!$conn_new) {
+            $db_new = mysqli_connect($new_db_host, $new_db_user, $new_db_pass, $new_db_name);
+            if (!$db_new) {
                 $notice = 'rmenu';
                 $content = 'Thông tin cấu hình không chính xác. Không thể kết nối với cơ sở dữ liệu';
             } else {
@@ -59,7 +59,7 @@ if (!$conn) {
                     `user_agent` varchar(255) NOT NULL,
                     PRIMARY KEY (`id`)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
-                $conn_new->query($sql);
+                $db_new->query($sql);
                 //notification
                 $notice = 'gmenu';
                 $content = 'Kết nối với cơ sở dữ liệu thành công!

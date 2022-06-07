@@ -16,7 +16,6 @@ $http_host = $_SERVER['HTTP_HOST'];
 $request_uri = $_SERVER['REQUEST_URI'];
 
 //database config
-$type_db = 'mysqli';
 $url_phpmyadmin = 'http://localhost:8080/phpmyadmin';
 $db_host = 'localhost';
 $db_user = 'root';

@@ -98,14 +98,6 @@ abstract class CI_DB_driver
 	public $dbdriver		= 'mysqli';
 
 	/**
-	 * Sub-driver
-	 *
-	 * @used-by	CI_DB_pdo_driver
-	 * @var	string
-	 */
-	public $subdriver;
-
-	/**
 	 * Table prefix
 	 *
 	 * @var	string
@@ -159,7 +151,7 @@ abstract class CI_DB_driver
 	 *
 	 * @var	object|resource
 	 */
-	public $conn_id			= FALSE;
+	public $db_id			= FALSE;
 
 	/**
 	 * Result ID
@@ -379,10 +371,10 @@ abstract class CI_DB_driver
 	/**
 	 * Initialize Database Settings
 	 *
-	 * @param	ressource	$conn_id Allow to use an already opened connection
+	 * @param	ressource	$db_id Allow to use an already opened connection
 	 * @return	bool
 	 */
-	public function initialize($conn_id = NULL)
+	public function initialize($db_id = NULL)
 	{
 		/* If an established connection is available, then there's
 		 * no need to connect and select the database.
@@ -397,7 +389,7 @@ abstract class CI_DB_driver
 		// ----------------------------------------------------------------
 
 		// Connect to the database and set the connection ID
-		$this->conn_id = $this->db_connect($this->pconnect, $conn_id);
+		$this->conn_id = $this->db_connect($this->pconnect, $db_id);
 
 		// No connection resource? Check if there is a failover else throw an error
 		if (!$this->conn_id) {
@@ -411,7 +403,7 @@ abstract class CI_DB_driver
 					}
 
 					// Try to connect
-					$this->conn_id = $this->db_connect($this->pconnect, $conn_id);
+					$this->conn_id = $this->db_connect($this->pconnect, $db_id);
 
 					// If a connection is made break the foreach loop
 					if ($this->conn_id) {
@@ -723,7 +715,7 @@ abstract class CI_DB_driver
 
 		if (!class_exists($driver, FALSE)) {
 			require_once(dirname(__FILE__) . '/DB_result.php');
-			require_once(dirname(__FILE__) . '/drivers/' . $this->dbdriver . '/' . $this->dbdriver . '_result.php');
+			require_once(dirname(__FILE__) . '/' . $this->dbdriver . '/' . $this->dbdriver . '_result.php');
 		}
 
 		return $driver;

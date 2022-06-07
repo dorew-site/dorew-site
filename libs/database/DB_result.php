@@ -56,7 +56,7 @@ class CI_DB_result {
 	 *
 	 * @var	resource|object
 	 */
-	public $conn_id;
+	public $db_id;
 
 	/**
 	 * Result ID

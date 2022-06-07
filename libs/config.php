@@ -11,7 +11,7 @@
 
 defined('_DOREW') or die('Access denied');
 
-include('database/src/DB.php');
+include('database/DB.php');
 
 use astute\CodeIgniterDB as CI;
 
@@ -23,7 +23,6 @@ $db_data = array(
 	'username' => $db_user,
 	'password' => $db_pass,
 	'database' => $db_name,
-	'dbdriver' => $type_db,
 	'dbprefix' => '',
 	'pconnect' => FALSE,
 	'db_debug' => TRUE,

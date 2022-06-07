@@ -17,7 +17,7 @@ require_once $root . '/cms/layout/func.php';
 $title = 'Cấu hình tập tin';
 include $root . '/cms/layout/header.php';
 
-if (!$conn || !is_login()) {
+if (!$db || !is_login()) {
     header('Location: /cms');
     exit();
 } else {

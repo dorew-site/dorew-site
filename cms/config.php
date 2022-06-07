@@ -18,18 +18,11 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/core.php';
 
 //connect database
-switch ($type_db) {
-    case 'mysqli':
-        $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
-        break;
-    case 'postgre':
-        $conn = pg_connect("host=$db_host port=5432 dbname=$db_name user=$db_user password=$db_pass");
-        break;
-}
+$db = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
 
 //check connection
 $uri_segments = explode('/', $request_uri);
-if (!$conn && $uri_segments[1] != 'cms') {
+if (!$db && $uri_segments[1] != 'cms') {
     header('Location: /cms');
     exit();
 }
