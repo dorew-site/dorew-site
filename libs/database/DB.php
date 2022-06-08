@@ -105,7 +105,7 @@ function &DB($params = '', $query_builder_override = NULL, $db_id = NULL)
 
     // Check for a subdriver
     if (!empty($DB->subdriver)) {
-        $driver_file = dirname(__FILE__) . '/drivers/' . $DB->dbdriver . '/subdrivers/' . $DB->dbdriver . '_' . $DB->subdriver . '_driver.php';
+        $driver_file = dirname(__FILE__) . '/' . $DB->dbdriver . '/subdrivers/' . $DB->dbdriver . '_' . $DB->subdriver . '_driver.php';
 
         if (file_exists($driver_file)) {
             require_once($driver_file);
