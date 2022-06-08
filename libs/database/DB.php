@@ -99,10 +99,6 @@ function &DB($params = '', $query_builder_override = NULL, $db_id = NULL)
     file_exists($driver_file) or die('Invalid DB driver');
     require_once($driver_file);
 
- 	// Load the result classes as well
-	require_once(BASEPATH.'database/DB_result.php');
-	require_once(BASEPATH.'database/mysqli/mysqli_result.php');
-
     // Instantiate the DB adapter
     $driver = '\astute\CodeIgniterDB\CI_DB_mysqli_driver';
     $DB     = new $driver($params);
