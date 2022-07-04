@@ -23,6 +23,7 @@ $db_data = array(
 	'username' => $db_user,
 	'password' => $db_pass,
 	'database' => $db_name,
+	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
 	'db_debug' => TRUE,
