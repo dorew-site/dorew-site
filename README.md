@@ -21,7 +21,7 @@ Xây dựng website với twig
 
 1.  Truy cập **/cms** và nhập thông tin cấu hình:
 
-![](https://i.imgur.com/2Da3lEe.png[/img])
+![](https://i.imgur.com/2Da3lEe.png)
 
 2. Đăng nhập với tài khoản quản trị đã nhập, và chọn **Cài đặt**. Sau đó, sửa lại **trang index** và **trang lỗi** mặc định sao cho phù hợp với website của bạn
 
