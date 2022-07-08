@@ -63,7 +63,6 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
             new \Twig\TwigFunction('json_decode', [$this, 'json_decode_']),
             new \Twig\TwigFunction('html_decode', [$this, 'html_decode']),
             new \Twig\TwigFunction('current_url', [$this, 'current_url']),
-            new \Twig\TwigFunction('captcha', [$this, 'captcha']),
         ];
     }
 
