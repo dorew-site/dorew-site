@@ -25,11 +25,13 @@ if (!$db || !is_login()) {
     if (strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
         $new_index = strtolower($_POST['new_index']) ?: 'index';
         $new_404 = strtolower($_POST['new_404']) ?: '_404';
+        $new_login = strtolower($_POST['new_login']) ?: 'dorew';
         //get old page
         $old_core = file_get_contents($root . '/cms/core.php');
         //replace old page with new page
         $new_core = str_replace('$default_index = \''.$default_index.'\';', '$default_index = \'' . $new_index . '\';', $old_core);
         $new_core = str_replace('$default_404 = \''.$default_404.'\';', '$default_404 = \'' . $new_404 . '\';', $new_core);
+        $new_core = str_replace('$default_login = \''.$default_login.'\';', '$default_login = \'' . $new_login . '\';', $new_core);
         //save new page
         file_put_contents($root . '/cms/core.php', $new_core);
         //notification
@@ -46,6 +48,11 @@ if (!$db || !is_login()) {
                 <tr>
                     <td class="left"><b>Trang chủ:</b></td>
                     <td style="text-align:left"><input type="text" name="new_index" value="' . $default_index . '" placeholder="index" /></td>
+                </tr>
+                <tr>
+                    <td class="left"><b>Cookie login:</b></td>
+                    <td style="text-align:left"><input type="text" name="new_login" value="' . $default_login . '" placeholder="dorew" /></td>
+                </tr>
             </table>
             <p><button type="submit">Thay đổi</button></p>
         </form>

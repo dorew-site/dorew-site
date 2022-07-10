@@ -1,0 +1,94 @@
+{# đây là tập tin quan trọng đối với tiến trình cài đặt, vui lòng không xóa bỏ nó #}
+
+{% block table_category %}
+{% set category_name = 'text NOT NULL' %}
+{% set category_slug = 'varchar(255) NOT NULL' %}
+{% set category_keyword = 'text NOT NULL' %}
+{% set category_description = 'text NOT NULL' %}
+{% set category_structure = {'name':category_name,'slug':category_slug,'keyword':category_keyword,'description':category_description} %}
+{% do create_table_with_column('category', category_structure) %}
+{# === Dữ liệu đầu tiên - THÙNG RÁC === #}
+{% if get_table_count('category') <= 0 %}
+  {% set category_structure_demo = {'name':'Thùng rác','slug':'thung-rac','keyword':'rubbish','description':'Nơi đây chứa những bài viết đã bị xoá bỏ nhưng chưa được phân hủy hoàn toàn'} %}
+  {% do insert_row_array_table('category', category_structure_demo) %}
+{% endif %}
+{# === end === #}
+{% endblock %}
+
+{#===========================================================================================================#}
+
+{% block table_blog %}
+{% set blog_time = 'int(11) NOT NULL' %}
+{% set blog_update_time = "int(11) NOT NULL DEFAULT '0'" %}
+{% set blog_author = 'varchar(255) NOT NULL' %}
+{% set blog_title = 'text NOT NULL' %}
+{% set blog_slug = 'varchar(255) NOT NULL' %}
+{% set blog_content = 'text NOT NULL' %}
+{% set blog_category = "int(11) NOT NULL DEFAULT '1'" %}
+{% set blog_view = "int(11) NOT NULL DEFAULT '1'" %}
+{% set blog_blocked = "varchar(255) NOT NULL DEFAULT 'n'" %}
+{% set blog_sticked = "varchar(255) NOT NULL DEFAULT 'n'" %}
+{% set blog_structure = {'update_time':blog_update_time,'time':blog_time,'author':blog_author,'title':blog_title,'slug':blog_slug,'content':blog_content,'category':blog_category,'view':blog_view,'blocked':blog_blocked,'sticked':blog_sticked} %}
+{% do create_table_with_column('blog', blog_structure) %}
+{# === Dữ liệu đầu tiên - Bài viết === #}
+{% if get_table_count('blog') <= 0 %}
+  {% set blog_structure_demo = {'update_time':'now'|date('U'),'time':'now'|date('U'),'author':'sei','title':'Chào mừng đến với Watermelon Zoo','slug':'chao-mung-den-voi-watermelon-zoo','content':'Xin chào, tớ là Khỉ đầu chó lông xoăn chỉ biết ăn - ngủ - đụ - ỉa','category':1,'view':1} %}
+  {% do insert_row_array_table('blog', blog_structure_demo) %}
+{% endif %}
+{# === end === #}
+{% endblock %}
+
+{#===========================================================================================================#}
+
+{% block table_comment %}
+{% set comment_blogid = 'int(11) NOT NULL' %}
+{% set comment_name = 'varchar(255) NOT NULL' %}    
+{% set comment_time = 'int(11) NOT NULL' %}    
+{% set comment_comment = 'text NOT NULL' %}    
+{% set comment_structure = {'blog_id':comment_blogid,'name':comment_name,'time':comment_time,'comment':comment_comment} %}    
+{% do create_table_with_column('comment', comment_structure) %} 
+{% endblock %}
+
+{#===========================================================================================================#}
+
+{% block table_chat %}
+{% set chat_name = 'varchar(255) NOT NULL' %}    
+{% set chat_time = 'int(11) NOT NULL' %}    
+{% set chat_comment = 'text NOT NULL' %}    
+{% set chat_structure = {'name':chat_name,'time':chat_time,'comment':chat_comment} %}    
+{% do create_table_with_column('chat', chat_structure) %} 
+{# === Dữ liệu đầu tiên - Chatbox === #}
+{% if get_table_count('chat') <= 0 %}
+  {% set chat_structure_demo = {'name':'sei','time':'now'|date('U'),'comment':'Bóc tôm. Chatbox này mất zin rồi nhé. mlem mlem'} %}
+  {% do insert_row_array_table('chat', chat_structure_demo) %}
+{% endif %}
+{# === end === #}
+{% endblock %}
+
+{#===========================================================================================================#}
+
+{% block table_users %}
+{% set user_nick = 'varchar(255) NOT NULL' %}
+{% set user_pass = 'varchar(255) NOT NULL' %}
+{% set user_name = 'text NOT NULL' %}
+{% set user_level = "int(11) NOT NULL DEFAULT '0'" %}
+{% set user_avatar = "varchar(255) NOT NULL DEFAULT '15'" %}
+{% set user_xu = "int(11) NOT NULL DEFAULT '500'" %}
+{% set user_like = "int(11) NOT NULL DEFAULT '0'" %}
+{% set user_cmt = "int(11) NOT NULL DEFAULT '0'" %}
+{% set user_on = "int(11) NOT NULL DEFAULT '0'" %}
+{% set user_reg = 'int(11) NOT NULL' %}
+{% set user_auto = 'varchar(255) NOT NULL' %}
+{% set user_structure = {'nick':user_nick,'pass':user_pass,'name':user_name,'level':user_level,'avatar':user_avatar,'xu':user_xu,'like':user_like,'cmt':user_cmt,'on':user_on,'reg':user_reg,'auto':user_auto} %}    
+{% do create_table_with_column('users', user_structure) %} 
+{# === Dữ liệu đầu tiên - BOT === #}
+{% if get_table_count('users') <= 0 %}
+  {% set bot_pass = 'botxinhgai'|replace({'0':'9','1':'8','2':'7','3':'6','4':'5','9':'0','8':'1','7':'2','6':'3','5':'4','a':'z',b:'y','c':'xx','d':'w','e':'v','f':'u','g':'t','h':'s','i':'r','j':'q','k':'p','l':'o','m':'n','z':'a',y:'b','x':'c','w':'d','v':'e','u':'f','t':'g','s':'h','r':'i','q':'j','p':'k','o':'l','n':'m','A':'Z',B:'Y','C':'XX','D':'W','E':'V','F':'U','G':'T','H':'S','I':'R','J':'Q','K':'P','L':'O','M':'N','Z':'A',Y:'B','X':'C','W':'D','V':'E','U':'F','T':'G','S':'H','R':'I','Q':'J','P':'K','O':'L','N':'M'}) %}
+  {% set bot_avatar = 'https://i.imgur.com/IzCGSwCb.jpg' %}
+  {% set bot_reg = 'now'|date('U') %}
+  {% from '_users' import auto %}
+  {% set bot_account = {'nick':'sei','pass':bot_pass,'name':'Khỉ đầu chó lông xoăn','level':120,'avatar':bot_avatar,'on':bot_reg,'reg':bot_reg,'auto':auto()|trim} %}
+  {% do insert_row_array_table('users', bot_account) %}
+{% endif %}
+{# === end === #}
+{% endblock %}

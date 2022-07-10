@@ -1,0 +1,62 @@
+{# bảng `users`: id, nick, pass, name, level, avatar, xu, like, cmt, on, reg, auto #}
+
+{% use '_layout' %}
+{% set title = 'Đăng ký' %}
+{{block('head')}}
+{% from '_functions' import rwurl %}
+{% from '_users' import auto %}
+
+{% macro e_pass(str) %}{{str|replace({'0':'9','1':'8','2':'7','3':'6','4':'5','9':'0','8':'1','7':'2','6':'3','5':'4','a':'z',b:'y','c':'xx','d':'w','e':'v','f':'u','g':'t','h':'s','i':'r','j':'q','k':'p','l':'o','m':'n','z':'a',y:'b','x':'c','w':'d','v':'e','u':'f','t':'g','s':'h','r':'i','q':'j','p':'k','o':'l','n':'m','A':'Z',B:'Y','C':'XX','D':'W','E':'V','F':'U','G':'T','H':'S','I':'R','J':'Q','K':'P','L':'O','M':'N','Z':'A',Y:'B','X':'C','W':'D','V':'E','U':'F','T':'G','S':'H','R':'I','Q':'J','P':'K','O':'L','N':'M'})}}{% endmacro %}
+
+{% if is_login() %}
+  {{redirect('/')}}
+{% else %}
+  <div class="phdr"><i class="fa fa-user-plus" aria-hidden="true"></i> Đăng Ký</div>
+  {# kiểm tra và lưu tài khoản #}
+  {% set now = 'now'|date('U') %}
+  {% set user = rwurl(get_post('user')) %}
+  {% set pass = _self.e_pass(get_post('pass')) %} 
+  {% set repass = _self.e_pass(get_post('repass')) %}
+  {% set data = {'nick':user,'pass':pass,'name':user,'on':'now'|date('U'),'reg':'now'|date('U'),'auto':auto()|trim} %}
+  {% set chatmn = {'name' :'sei','time':now,'comment':'Chào mừng @'~user~' đến với Dorew. Hãy lưu lại trang này và giới thiệu với bạn bè nhé!'} %}
+  {% if request_method()|lower == 'post' %}
+    {% if user and pass and repass %} 
+      {% if pass != repass %}
+        <div class="rmenu">Mật khẩu xác nhận không đúng.</div>
+      {% else %}
+        {% set udb = select_table_row_data('users', 'nick', user) %}
+        {% if user == udb.nick %} 
+          <div class="rmenu"> Tài khoản đã tồn tại.</div>
+        {% elseif user|length > 30 %}
+          <div class="rmenu">Tài khoản không dài quá 30 ký tự</div>
+        {% else %} 
+          {% if user matches '/^[a-zA-Z0-9\\-\\_]+[a-zA-Z0-9\\-\\_]$/' %} 
+            <div class="gmenu"> Đăng ký thành công. Bạn có thể đăng nhập</div>
+            {% do insert_row_array_table('users', data) %}
+            {% do insert_row_array_table('chat', chatmn) %}
+            {{redirect('/login?reg=s')}}
+          {% else %}
+            <div class="rmenu">Tài khoản không được chứa ký tự đặc biệt.</div>
+          {% endif %} 
+        {% endif %}
+      {% endif %}
+    {% else %}
+      <div class="rmenu"> Vui lòng điền đầy đủ thông tin.</div>
+    {% endif %}
+  {% endif %}
+  <form method="post" action="">
+    <div class="menu"> 
+      <i class="fa fa-user" aria-hidden="true"></i>Tài khoản:<br/>
+      <input type="text" name="user"><br/>
+      <i class="fa fa-lock" aria-hidden="true"></i> Mật khẩu:<br/>
+      <input type="password"  name="pass"><br/>
+      <i class="fa fa-lock" aria-hidden="true"></i> Nhập lại mật khẩu:<br/>
+      <input type="password" name="repass"><br/>
+    </div>
+    <div class="menu">
+      <script src="/doomcaptcha.js?1" countdown="on" label="Captcha" enemies="4"></script>
+      <p><button style="border: 4px solid red;" type="submit" id="submit" class="button" disabled>Đăng Ký</button></p>
+    </div>
+  </form>
+{% endif %}
+{{block('end')}} 

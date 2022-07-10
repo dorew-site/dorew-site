@@ -20,7 +20,7 @@ $url_phpmyadmin = 'http://localhost:8080/phpmyadmin';
 $db_host = 'localhost';
 $db_user = 'root';
 $db_pass = '';
-$db_name = 'dorew_upi';
+$db_name = 'dorewsite';
 
 //admin account infomation
 $account_admin = 'admin';
@@ -31,6 +31,7 @@ $new_password = sha1(substr($passMd5, 0, 8));
 //file config
 $default_index = 'index';
 $default_404 = '_404';
+$default_login = 'dorew';
 $dir_tpl = $root.'/cms/template';
 $dir_backup = $root.'/cms/backup';
 $image_ext = ['png', 'jpg', 'jpeg', 'gif', 'ico', 'svg', 'bmp', 'tiff', 'tif', 'webp', 'psd'];

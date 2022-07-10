@@ -1,0 +1,26 @@
+{# danh sách online: bảng `users` where `on` #}
+
+{% from '_users' import getAvtUser %}
+
+{% set total = 0 %}
+{% set limit = 'now'|date('U','Asia/Ho_Chi_Minh') - 300 %}
+{% for user in select_table_data('users', 'id', 'asc') %}
+  {% if user.on > limit %}
+    {% set total = total + 1 %}
+  {% endif %}
+{% endfor %}
+
+{% if is_login() %}
+  <div class="phdr"><i class="fa fa-users" aria-hidden="true"></i> Online [{{total}}] | <a href="/users/"><b>All</b></a></div>
+  {% if total >= 1 %}
+    <div class="menu">
+      {% for user in select_table_data('users', 'id', 'asc') %}
+        {% if user.on > limit %}
+          <a href="/user/{{user.nick}}"><img src="{{getAvtUser(user.nick)}}" class="imgAvtUser" width="20px" title="{{user.name}}"/></a> 
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="menu">Không có thành viên online</div>
+  {% endif %}
+{% endif %}

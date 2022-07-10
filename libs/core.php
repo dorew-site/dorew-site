@@ -87,5 +87,4 @@ if (!file_exists(VIEWPATH . DIRECTORY_SEPARATOR . $pathTWIG)) {
 		die('Page not found.');
 	}
 }
-require_once BASEPATH . 'libs/config.php';
 require_once BASEPATH . 'libs/vendor/autoload.php';

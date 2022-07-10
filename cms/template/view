@@ -1,46 +1,183 @@
+{# bảng `blog`: id, time, author, title, slug, content, category, view, blocked, sticked #}
+{% use '_blog' %}
 {% use '_layout' %}
-{% from '_functions' import size, checkExtension, showFileInfo %}
+{% set url = get_uri_segments() %}
+{% set act = get_get('act') %}
 
-{# THIẾT LẬP #}
-  {% set table_name = 'ipfs' %}
-{# END THIẾT LẬP #}
+{% from '_functions' import ago,rwurl,paging,checkExtension,size %}
+{% from '_users' import maunick,getAvtUser,auto %}
+{% if is_login() %}
+  {% set user = select_table_row_data('users', 'nick', is_login()) %}
+{% endif %}
+{% from '_bbcode' import bbcode %}
 
-{% set uri = get_uri_segments () %}
-{% set fileID = uri[1] %}
-{% set data = select_table_row_data(table_name, 'id', fileID) %}
-{% if data.id %}
-  {% set title = 'Xem file: '~data.filename %}
-{% else %}
-  {% set title = 'Lỗi' %}
+{% set id_current = url[1]|split('-')|first|trim %}{# lấy id bài viết #}
+{% set blog = select_table_row_data('blog', 'id', id_current) %}{# lấy mảng dữ liệu `blog` theo `id_current` #}
+{% if id_current != blog.id %}
+  {{redirect('/category')}}
+{% endif %}
+{% do update_row_table('blog', 'view', blog.view+1, 'id', id_current) %}
+{% set title = blog.title %}
+{# lấy dữ liệu của cat theo blog.category(int) #}
+{% set cat = select_table_row_data('category', 'id', blog.category) %}
+{{block('head')}}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+<script src="https://unpkg.com/ipfs-http-client@30.1.3/dist/index.js"></script>
+<script src="https://bundle.run/buffer@5.2.1"></script>
+
+<div class="phdr"><span itemscope itemtype="http://data-vocabulary.org/Breadcrumb" itemscope="itemscope"><a itemprop="url" href="/"><span itemprop="title"><i class="fa fa-home" aria-hidden="true"></i> Trang chủ</span></a></span> » <span itemscope itemtype="http://data-vocabulary.org/Breadcrumb" itemscope="itemscope"><a itemprop="url" href="/category/{{cat.cid}}-{{cat.slug}}.html"><span itemprop="title">{{cat.name}}</span></a></span> » <span itemscope itemtype="http://data-vocabulary.org/Breadcrumb" itemscope="itemscope"><a itemprop="url" href="/view/{{blog.fid}}-{{blog.slug}}.html"><span itemprop="title">{{title}}</span></a></span></div>
+<style>.video-wrapper{position:relative;padding-bottom:56.25%;height:0;overflow:hidden}.video-wrapper iframe{position:absolute;top:0;left:0;width:100%;height:100%}</style>
+
+{#===========================================================================================================#}
+
+<div class="phdr" style="font-weight:bold;">{% if blog.sticked=='y' %}<i class="fa fa-thumb-tack" aria-hidden="true"></i> {% endif %}{% if blog.blocked=='y' %}<i class="fa fa-lock" aria-hidden="true"></i>{% else %}{% if blog.sticked!='y' %}<i class="fa fa-spinner fa-pulse fa-fw"></i>{% endif %}{% endif %} {{title}}</div>
+
+{% if is_login() and user.level > '120' %}
+  {% if act=='lock' %}
+    {% set result,col,col_val = 'Đóng cửa chủ đề thành công','blocked','y' %}
+  {% elseif get_get('act')=='unlock' %}
+    {% set result,col,col_val = 'Mở cửa chủ đề thành công','blocked','no' %}
+  {% elseif get_get('act')=='pin' %}
+    {% set result,col,col_val = 'Ghim chủ đề thành công','sticked','y' %}
+  {% elseif get_get('act')=='unpin' %}
+    {% set result,col,col_val = 'Gỡ ghim chủ đề thành công','sticked','n' %}
+  {% endif %}
+  {% if get_get('act') in ['lock','unlock','pin','unpin'] %}
+    {% do update_row_table('blog', col, col_val, 'id', id_current) %}
+    <div class="gmenu">{{result}}</div><script>window.location.href='/view/{{id_current}}-{{blog.slug}}.html'</script>
+  {% endif %}
 {% endif %}
 
-{{block('header')}}
+<div class="blog_info">
+  <div class="thumb_blog"><img class="imgAvtUser" src="{{getAvtUser(blog.author)}}" alt="Avatar" width="60px" height="60px"></div>
+  <div class="more_info">
+    <span class="row tit"><i class="fa fa-user"></i> <a href="/user/{{blog.author}}/">{{maunick(blog.author)}}</a></span>
+    <span class="row more"><i class="fa fa-clock-o"></i> {{ago(blog.time)}}</span>
+    <span class="row more">
+      <i class="fa fa-eye" aria-hidden="true"></i>  {{blog.view}} 
+    </span>
+  </div>
+</div>
 
-{% if data.id %}
-  {% if password != null %}
-    {% if get_get('mk') == data.password %}
-      {{showFileInfo(table_name,fileID)}}
-    {% else %}
-      {% if get_get('mk') %}
-        <script>alert("Sai mật khẩu!");</script>
-      {% endif %}
-      <div class="phdr"><i class="fa fa-lock" aria-hidden="true"></i>  {{data.filename}}</div>
-      <div  class="menu" style="text-align: center">
-        <form action="/view/{{fileID}}/">
-          Nhập mật khẩu: <br/>
-          <input type="password" name="mk" value="">
-          <button type="submit">Xác nhận</button>
-        </form>
-      </div>
+{% if (is_login() and blog.author == is_login() and blog.blocked!='y') or user.level >= '120' %}
+  <div class="menu">
+    <b><i class="fa fa-wrench" aria-hidden="true"></i> Công cụ:</b> &emsp;&emsp; 
+    <a href="/category/edit-post/{{id_current}}"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> Chỉnh sửa</a> 
+    {% if user.level > '120' %}
+      / <a href="/category/delete-post/{{id_current}}"><i class="fa fa-trash-o" aria-hidden="true"></i> Xoá</a>
+      / {% if blog.blocked!='y' %}<a href="?act=lock"><i class="fa fa-lock" aria-hidden="true"></i> Đóng thảo luận</a>{% else %}<a href="?act=unlock"><i class="fa fa-unlock" aria-hidden="true"></i> Mở thảo luận</a>{% endif %}
+      / {% if blog.sticked!='y' %}<a href="?act=pin"><i class="fa fa-thumb-tack" aria-hidden="true"></i> Ghim chủ đề</a>{% else %}<a href="?act=unpin"><i class="fa fa-file-text" aria-hidden="true"></i> Gỡ ghim</a>{% endif %}
     {% endif %}
-  {% else %}
-    {{showFileInfo(table_name,fileID)}}
-  {% endif %}
-{% else %}
-  <div class="phdr"><i class="fa fa-ban" aria-hidden="true"></i> Lỗi! </div>
-  <div class="menu" style="text-align: center">
-    <img src="https://i.imgur.com/V1alq6F.jpg" height="50%" width="50%">
   </div>
 {% endif %}
 
-{{block('footer')}}
+<div class="menu" style="text-align: justify;font-style: normal;padding:12px" id="{{auto()|trim|slice(0,5)}}-{{id_current}}">
+  {{bbcode(blog.content)}}
+</div>
+
+{#===========================================================================================================#}
+
+{# === Xử lý bình luận === #}
+{% if is_login() and blog.blocked!='y' %}
+  {% if request_method()|lower == 'post' %}{% if  get_post('msg')!=null %}
+    {% set data = {"blog_id":id_current,"name":is_login()|default('sei'),"time":"now"|date('U'),"comment":get_post('msg')} %}
+    {% do insert_row_array_table('comment', data) %}
+    {% do update_row_table('users', 'xu', user.xu+100, 'nick', is_login()) %}
+    {% do update_row_table('blog', 'update_time', 'now'|date('U'), 'id', id_current) %}
+
+    {# hiện thông báo ra trang chủ #}
+    {% set chatmn_cmt = '@'~is_login()~' Vừa bình luận tại [url=/view/'~id_current~'-'~blog.slug~'.html#listcmt]'~title~'[/url]' %}
+    {% set chatmn = {"name" :"sei","time":"now"|date('U'),"comment":chatmn_cmt} %}
+    {% do insert_row_array_table('chat', chatmn) %}
+    <div class="gmenu">Bình luận thành công</div>
+    {{redirect('/view/'~id_current~'-'~blog.slug~'.html#listcmt')}}
+  {% endif %}{% endif %}
+{% endif %} 
+
+{# === End xử lý === #}
+
+{# === Phân trang bình luận === #}
+{% if is_login() and blog.blocked!='y' %}
+  {% set sort_cmt = 'desc' %}
+{% else %}
+  {% set sort_cmt = 'asc' %}
+{% endif %}
+{% set list_cmt = select_table_where_data('comment', 'blog_id', id_current, 'id', sort_cmt)  %}
+{% set totalcmt = 0 %}
+{% for t in list_cmt %}
+  {% if t.blog_id %}
+    {% set totalcmt = totalcmt + 1 %}
+  {% endif %}
+{% endfor %}
+
+{% set per_cmt = '10' %}
+{% set page_max_cmt = totalcmt//per_cmt %}
+{% if totalcmt//per_cmt != totalcmt/per_cmt %}
+  {% set page_max_cmt = totalcmt//per_cmt+1 %}
+{% endif %}
+{% set p_cmt = get_get('loadCmt') %}
+{% if p_cmt matches '/[a-zA-z]|%/' or p_cmt<1 %}
+  {% set p_cmt = 1 %}
+{% endif %}
+{% if p_cmt > page_max_cmt %}
+  {% set p_cmt = page_max_cmt %}
+{% endif %}
+{% set st_cmt = p_cmt*per_cmt-per_cmt %}
+
+{% if is_login() and blog.blocked=='y' %}
+  <div class="rmenu">Bạn thông thể tham gia bình luận. Chức năng bình luận của bài viết này đã bị đóng!</div>
+{% endif %}
+
+{% if totalcmt > '0' and not is_login() or totalcmt >= '0' and is_login() %}
+  <div class="phdr" id="listcmt"><i class="fa fa-comments-o" aria-hidden="true"></i> {% if is_login() and blog.blocked!='y' %}Bình luận gần đây{% else %}Danh sách bình luận{% endif %} <font color="red">({{totalcmt}})</font></div>
+  {% if not is_login() %}
+    <div class="gmenu">Hãy <a href="/login">đăng nhập</a> vào diễn đàn để thảo luận cùng mọi người nhé!</div>
+  {% endif %}
+{% endif %}
+
+
+{# === Danh sách bình luận === #}
+{% if totalcmt == '0' and is_login() %}
+  <div class="list1">Chưa có bình luận nào</div>
+{% else %}
+  {% for cmtBlog in list_cmt|slice(st_cmt,per_cmt) %}
+    {% if cmtBlog.blog_id %}
+      {% set ucmt = select_table_row_data('users', 'nick', cmtBlog.name) %}
+      <div class="list1">
+        <div>
+          <span name="online">{% if ucmt.on < ('now'|date('U')-300) %}<font color="red">•</font>{% else %}<font color="green">•</font>{% endif %}</span>
+          <img src="{{getAvtUser(cmtBlog.name)}}" class="imgAvtUser" width="20px"/> 
+          <a href="/user/{{cmtBlog.name}}">{{maunick(cmtBlog.name)}}</a> 
+          {% if is_login() %}<a href="javascript:tag('@{{cmtBlog.name}} ', '')"><small><i class="fa fa-tag" aria-hidden="true"></i></small></a>{% endif %}
+          <small><font color="#999">{{ago(cmtBlog.time)}}</font></small>
+        </div>
+        <div>{{bbcode(cmtBlog.comment)|raw}}</div> 
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+{{paging('view/'~id_current~'-'~blog.slug~'.html?loadCmt=',p_cmt,page_max_cmt)}}
+{# === End danh sách === #}
+{# === End phân trang === #}
+
+{% if is_login() and blog.blocked!='y' %}
+  <div class="phdr"><i class="fa fa-plus" aria-hidden="true"></i> Thêm bình luận</div>
+  <style>#comment-comment{tab-size:4;}</style>
+  <div class="menu">
+    {{block('toolbar')}}
+    <form id="form" method="post" action="">
+      <textarea id="comment-comment" name="msg" rows="6" placeholder="" required=""></textarea></br/>
+      <input style="display:none" type="file" id="f" accept="image/*">
+      <input style="display:none" type="file" id="f2">
+      <button id="comment-submit" name="submit" type="submit" id="submit"> Gửi bình luận</button>
+      <a id="upload">[ <i class="fa fa-upload" aria-hidden="true"></i> ]</a>
+      <a id="upload2">[ <i class="fa fa-cube" aria-hidden="true"></i> ]</a>
+    </form>
+  </div>
+</div>
+<script src="/textarea-improved3.js" type="text/javascript"></script>
+<script src="/upload-cmt.js" type="text/javascript"></script>
+{% endif %} 
+
+{{block('end')}}

@@ -1,0 +1,50 @@
+{% from '_bbcode' import bbcode %}
+{% from '_users' import maunick,getAvtUser %}
+{% from '_functions' import ago,paging %}
+
+{% set pageID='1' %}
+
+{% set getPageID = get_get('page') %}
+{%  if  getPageID %}
+    {% set pageID = getPageID %}
+{% endif %}
+
+
+
+{% set idAll = get_table_count('chat') %}
+
+
+
+{% set idNow = idAll -10*(pageID-1) %}
+
+
+{% set idTop10 = (idNow -9)|trim %}
+
+
+
+{% for id_chat in idNow..idTop10%}
+{% set chat = select_table_row_data('chat', 'id', id_chat) %}
+
+{% if id_chat and chat.name %}
+{% set uchat = select_table_row_data('users', 'nick', chat.name) %}
+
+      <div class="list1">
+        <table cellpadding="0" cellspacing="1">
+          <tbody>
+            <tr>
+              <td width="auto"><img class="imgAvtUser" src="{{getAvtUser(chat.name)|trim}}" width="60" height="60"></td>
+              <td>
+                <span name="online">{% if uchat.on < ('now'|date('U')-300) %}<font color="red"><i class="fa fa-toggle-off" aria-hidden="true"></i></font>{% else %}<font color="green"><i class="fa fa-toggle-on" aria-hidden="true"></i></font>{% endif %}</span> 
+                <a href="/user/{{chat.name}}">{{maunick(chat.name)}}</a> 
+                <a href="javascript:tag('@{{chat.name}} ', '')"><small><i class="fa fa-tag" aria-hidden="true"></i></small></a><br/> 
+                <small><font color="#999"><i class="fa fa-clock-o"></i> {{chat.time|date('d.m.Y - H:i', 'Asia/Ho_Chi_Minh')}}</font></small>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="chatbox"><span class="textchat"> </span>{{bbcode(chat.comment)}}</div>
+      </div>
+
+{% endif %}
+
+{% endfor %}

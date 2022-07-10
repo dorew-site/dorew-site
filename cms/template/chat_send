@@ -1,0 +1,7 @@
+{% if is_login() %}
+  {# sử dụng insert_row_array_table(table_name, array_row) #}
+  {% if get_post('msg') != '' and get_post('msg') != '\r\n' and get_post('msg')!=null %}
+    {% set array_row = {'name':is_login(),'time':'now'|date('U'),'comment':get_post('msg')} %}
+    {% do insert_row_array_table('chat', array_row) %}
+  {% endif %}
+{% endif %}

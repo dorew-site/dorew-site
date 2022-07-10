@@ -1,0 +1,240 @@
+{#
+ # bảng `blog`: id, time, author, title, slug, content, category, view, blocked, sticked 
+ # bảng `category`: id, name, slug, keyword, description
+#}
+{% use '_blog' %}
+{% use '_layout' %}
+
+{% set url = get_uri_segments() %}
+{% from '_functions' import ago,rwurl,paging %}
+
+{% if url[1] in ['new-post','edit-post','delete-post','delete-cat','new-cat'] and is_login() %}
+{#==================================================================#}
+  {% set unix_now = 'now'|date('U') %}
+  {% set user = select_table_row_data('users', 'nick', is_login()) %}
+  {% set total_blog = get_table_count('blog') %}
+  {% if url[1] in ['edit-post','delete-post'] %}
+    {% set blog_id = url[2] %}
+    {% set blog_data = select_table_row_data('blog', 'id', blog_id) %}
+    {% if blog_id != blog_data.id or user.level < 120 or is_login() != blog_data.author %}
+      {% if blog_id != blog_data.id %}{{redirect('/category')}}{% else %}
+        {{redirect('/view/'~blog_id~'-'~blog_data.slug~'.html')}}
+      {% endif %}
+    {% endif %}
+  {% endif %}
+  {% if url[1] == 'new-post' %}
+    {% set title = 'Đăng bài viết' %}
+    {% set icon_fa = 'fa fa-pencil' %}
+  {% elseif url[1] == 'edit-post' %}
+    {% set title = 'Chỉnh sửa bài viết' %}
+    {% set icon_fa = 'fa fa-pencil-square-o' %}
+  {% elseif url[1] == 'delete-post' %}
+    {% set title = 'Xoá bài viết' %}
+    {% set icon_fa = 'fa fa-trash-o' %}
+  {% elseif url[1] == 'delete-cat' %}
+    {% if user.level < 120 %}{{redirect('/')}}{% endif %}
+    {% set title = 'Xoá thư mục' %}
+    {% set icon_fa = 'fa fa-trash-o' %}
+  {% else %}
+    {% if user.level < 120 %}{{redirect('/')}}{% endif %}
+    {% set title = 'Tạo thư mục' %}
+    {% set icon_fa = 'fa fa-bars' %}
+  {% endif %}
+  {{block('head')}}
+
+  <div class="phdr"><b><i class="{{icon_fa}}"></i> {{title}}</b></div>
+  {% if url[1] == 'new-post' %}
+    {% set post_title = get_post('title')|slice(0,250) %}
+    {% set post_slug = rwurl(post_title) %}
+    {% set post_content = get_post('content') %}
+    {% set post_category = get_post('category') %}
+    {% set new_post = {'time':unix_now,'author':is_login()|default('sei'),'title':post_title,'slug':post_slug,'content':post_content,'category':post_category} %}
+    {% if request_method()|lower == 'post' %}
+      {% if post_slug == select_table_where_data('blog', 'slug', post_slug).slug %}
+        <div class="rmenu">Bài viết này đã tồn tại. Vui lòng chọn tiêu đề khác!</div>
+      {% else %}
+        {% do insert_row_array_table('blog', new_post) %}
+        {{redirect('/view/'~(total_blog+1)~'-'~post_slug~'.html')}}
+      {% endif %}
+    {% endif %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.7.0/jquery.validate.min.js"></script>
+    <form name="form" action="" method="post">
+      <div class="menu"><b><i class="fa fa-gg" aria-hidden="true"></i> Tiêu đề:</b> <input class="w3-input w3-border" type="text" name="title" value="" maxlength="250" style="height:100%; width:100%"></div>
+      <div class="menu"><b><i class="fa fa-bars"></i> Chuyên mục:</b> 
+        <select class="w3-select w3-border" name="category">  
+    	  {% for cat in select_table_data('category') %}
+            {% if cat.id %}<option value="{{cat.id}}">{{cat.name}}</option>{% endif %}
+	  {% endfor %}
+        </select>
+      </div>
+      <div class="menu"><b><i class="fa fa-newspaper-o" aria-hidden="true"></i> Nội dung:</b> 
+        <a id="upload">[ <i class="fa fa-upload" aria-hidden="true"></i> ]</a>
+        <a id="upload2">[ <i class="fa fa-cube" aria-hidden="true"></i> ]</a>
+        <br/>{{block('toolbar')}}
+        <textarea id="comment-comment" name="content" rows="15"></textarea></div>
+      </div>
+      <div class="menu"><center><button type="submit" class="button">Đăng bài</button></center></div>
+      <input style="display:none" type="file" id="f" accept="image/*">
+      <input style="display:none" type="file" id="f2"
+    </form>
+    <script src="/chat_nft.js?3" type="text/javascript"></script>
+    <script src="/chat_imgur.js" type="text/javascript"></script>
+    <script src="/js/textarea-improved3.js" type="text/javascript"></script>
+  {% elseif url[1] == 'edit-post' %}
+    {% set post_title = get_post('title')|slice(0,250)|default(blog_data.title) %}
+    {% set post_content = get_post('content')|default(blog_data.content) %}
+    {% set post_category = get_post('category')|default(blog_data.category) %}
+    {% set edit_post = {'title':post_title,'content':post_content,'category':post_category} %}
+    {% if request_method()|lower == 'post' %}
+      {% do update_row_array_table('blog', edit_post, 'id', blog_id) %}
+      {{redirect('/view/'~blog_data.id~'-'~blog_data.slug~'.html')}}
+    {% endif %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.7.0/jquery.validate.min.js"></script>
+    <form name="form" action="" method="post">
+      <div class="menu"><b><i class="fa fa-gg" aria-hidden="true"></i> Tiêu đề:</b> <input class="w3-input w3-border" type="text" name="title" value="{{blog_data.title}}" maxlength="250" style="height:100%; width:100%"></div>
+      <div class="menu"><b><i class="fa fa-bars"></i> Chuyên mục:</b> 
+        <select class="w3-select w3-border" name="category">  
+    	  {% for cat in select_table_data('category') %}
+            {% if cat.id %}<option value="{{cat.id}}" {{cat.id == blog_data.category ? 'selected':null}}>{{cat.name}}</option>{% endif %}
+	  {% endfor %}
+        </select>
+      </div>
+      <div class="menu"><b><i class="fa fa-newspaper-o" aria-hidden="true"></i> Nội dung:</b> 
+        <a id="upload">[ <i class="fa fa-upload" aria-hidden="true"></i> ]</a>
+        <a id="upload2">[ <i class="fa fa-cube" aria-hidden="true"></i> ]</a>
+        <br/>{{block('toolbar')}}
+        <textarea id="comment-comment" name="content" rows="15">{{blog_data.content}}</textarea></div>
+      </div>
+      <div class="menu"><center><button type="submit" class="button">Chỉnh sửa</button></center></div>
+      <input style="display:none" type="file" id="f" accept="image/*">
+      <input style="display:none" type="file" id="f2"
+    </form>
+    <script src="/chat_nft.js?3" type="text/javascript"></script>
+    <script src="/chat_imgur.js" type="text/javascript"></script>
+    <script src="/js/textarea-improved3.js" type="text/javascript"></script>
+  {% elseif url[1] == 'delete-post' %}
+    <div class="menu" style="text-align:center">
+    {% if request_method()|lower == 'post' %}
+      {% for cmtBlog in select_table_where_data('comment', 'blog_id', blog_id) %}
+        {% if cmtBlog.id %}{% do  delete_row_table('comment', 'id', cmtBlog.id) %}{% endif %}
+      {% endfor %}
+      {% do delete_row_table('blog', 'id', blog_id) %}
+      {{redirect('/category')}}
+    {% endif %}
+      <form method="post">
+        <a href="/view/{{blog_id}}-{{blog_data.slug}}.html">{{blog_data.title}}</a>
+        <br/><b style="color:red">Bạn có thực sự muốn xoá bài viết này không?</b>
+        <br/><span style="font-size:14px;color:#444">Điều này đồng nghĩa với toàn bộ dữ liệu liên quan đến bài viết sẽ bị xoá sạch, bao gồm danh sách bình luận.</span>
+        <br/><button type="submit" class="button">Xoá luôn</button>
+      </form>
+    </div>
+  {% elseif url[1] == 'delete-cat' %}
+    {% set cat_id = url[2] %}
+    {% set cat_data = select_table_row_data('category', 'id', cat_id) %}
+    <div class="menu" style="text-align:center">
+    {% if request_method()|lower == 'post' %}
+      {% for blog in select_table_where_data('blog', 'category', cat_id) %}
+        {% if blog.id %}{% do  delete_row_table('blog', 'id', blog.id) %}{% endif %}
+        {% for cmtBlog in select_table_where_data('comment', 'blog_id', blog.id) %}
+          {% if cmtBlog.id %}{% do  delete_row_table('comment', 'id', cmtBlog.id) %}{% endif %}
+        {% endfor %}
+      {% endfor %}
+      {% do delete_row_table('category', 'id', cat_id) %}
+      {{redirect('/category')}}
+    {% endif %}
+      <form method="post">
+        <a href="/category/{{cat_id}}-{{cat_data.slug}}.html">{{blog_data.name}}</a>
+        <br/><b style="color:red">Bạn có thực sự muốn xoá thư mục này không?</b>
+        <br/><span style="font-size:14px;color:#444">Điều này đồng nghĩa với toàn bộ dữ liệu liên quan đến thư mục sẽ bị xoá sạch, bao gồm danh sách bài viết và bình luận.</span>
+        <br/><button type="submit" class="button">Xoá luôn</button>
+      </form>
+    </div>
+  {% else %}
+    {% if request_method()|lower == 'post' %}
+      {% set cat_name = get_post('name')|slice(0,50) %}
+      {% set cat_slug = rwurl(cat_name) %}
+      {% set cat_keyword = get_post('keyword')|slice(0,250) %}
+      {% set cat_description = get_post('description')|slice(0,250) %}
+      {% set new_cat = {'name':cat_name,'slug':cat_slug,'keyword':cat_keyword,'description':cat_description} %}
+      {% do insert_row_array_table('category', new_cat) %}
+      {{redirect('/'~url|join('/'))}}
+    {% endif %}
+    <div class="menu">
+      <form action="" method="post">
+        <b><i class="fa fa-gg" aria-hidden="true"></i> Tiêu đề:</b> <input class="w3-input w3-border" type="text" name="name" value="" maxlength="50" style="height:100%; width:100%"><br/>
+        <b><i class="fa fa-gg" aria-hidden="true"></i> Từ khoá:</b> <input class="w3-input w3-border" type="text" name="keyword" value="" maxlength="250" style="height:100%; width:100%"><br/>
+        <b><i class="fa fa-gg" aria-hidden="true"></i> Mô tả:</b> <textarea class="w3-input w3-border" name="description" rows="5"></textarea>
+        <p style="text-align:center"><button type="submit" class="button">Tạo mới</button></p>
+      </form>
+    </div>
+    <div class="phdr"><b>Danh sách</b></div>
+    {% for cat in select_table_data('category', 'id', 'asc') %}
+      {% set total_blog = 0 %}
+      {% for blog in select_table_data('blog') %}
+        {% if blog.category == cat.id %}
+          {% set total_blog = total_blog + 1 %}
+        {% endif %}
+      {% endfor %}
+      {% if cat.id %}
+        <div class="list1">
+          <table style="width:100%"><tr>
+            <td style="text-align:left"><b>{{cat.name}}</b> ({{total_blog}})</td>
+            <td style="text-align:right"><a style="color:red;font-weight:600" href="/category/delete-cat/{{cat.id}}"><i class="fa fa-trash-o" aria-hidden="true"></i> Xoá</a></td>
+          </tr></table>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{#==================================================================#}
+{% else %}
+{#==================================================================#}
+  {% from '_users' import maunick %}
+  {% set table_name = 'blog' %}
+  {% set uri = uri|default('index') %}
+  {% set cat = select_table_row_data('category', 'id', url[1]|split('-')|first|trim) %}
+  {% set title = cat.name|default('Chuyên mục') %}
+  {{block('head')}}
+
+  {% if cat.name and cat.id %}
+    <div class="phdr"><a href="/"><i class="fa fa-home" aria-hidden="true"></i> Trang chủ</a> » <b>{{cat.name}}</b></div>
+    <div class="gmenu"><a href="/search"><i class="fa fa-search" aria-hidden="true"></i> Tìm kiếm</a></div>
+    {% set data = select_table_where_data('blog', 'category', cat.id) %}
+    {% set total = data.total|default(0) %}
+    {% set per = '10' %}
+    {% set page_max = total//per %}
+    {% if total//per != total/per %}
+      {% set page_max = total//per+1 %}
+    {% endif %}
+    {% set p=url[2]|default(1) %}
+    {% if p matches '/[a-zA-z]|%/' or p < 1 %}{% set p = 1 %}{% endif %}
+    {% if p > page_max %}{% set p = page_max %}{% endif %}
+    {% set st=p*per-per %}
+    {% if total == '0' %}
+      <div class="list1">Chưa có bài viết nào</div>
+    {% else %}
+      {% for blog in data|slice(0,total)|slice(st,per) %}
+        {% if blog.id %}
+          {% set category = select_table_row_data('category', 'id', blog.category).name %}
+          <div class="{% if blog.sticked=='y' %}sticked{% else %}list1{% endif %}">
+            <table cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td>
+                  <span class="topic cat_{{random(['red','blue','green','orange'])}}"><i class="fa fa-{{random(['rocket','plane','bicycle','subway','train','motorcycle','bus','car'])}}"></i> {{category}}</span> 
+                  {% if blocked=='y' %}<i class="fa fa-lock" style="color:red" aria-hidden="true"></i> {% endif %}<a href="/view/{{blog.id}}-{{blog.slug}}.html"> {{blog.title}}</a>
+                  <div class="sub"><small><i class="fa fa-eye" aria-hidden="true"></i> {{blog.view}} / <i class="fa fa-clock-o"></i> {{ago(blog.time)}}</small></div>
+                </td>
+              </tr>
+            </table>
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    {{paging('category/'~cat.id~'-'~cat.slug~'/',p,page_max)|replace({'/=':'/'})|raw}}
+  {% else %}
+    {{block('category')}}
+  {% endif %}
+{#==================================================================#}
+{% endif %}
+{{block('end')}}

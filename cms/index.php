@@ -38,8 +38,8 @@ if (!$db) {
             $new_db_info = str_replace('$account_admin = \'' . $account_admin . '\';', '$account_admin = \'' . $admin_user . '\';', $new_db_info);
             $new_db_info = str_replace('$password_admin = \'' . $password_admin . '\';', '$password_admin = \'' . $admin_pass . '\';', $new_db_info);
             //check if database infomation is correct
-            $db_new = mysqli_connect($new_db_host, $new_db_user, $new_db_pass, $new_db_name);
-            if (!$db_new) {
+            $connect = mysqli_connect($new_db_host, $new_db_user, $new_db_pass, $new_db_name);
+            if (!$connect) {
                 $notice = 'rmenu';
                 $content = 'Thông tin cấu hình không chính xác. Không thể kết nối với cơ sở dữ liệu';
             } else {
@@ -59,6 +59,7 @@ if (!$db) {
                     `user_agent` varchar(255) NOT NULL,
                     PRIMARY KEY (`id`)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+                $db_new = new mysqli($new_db_host, $new_db_user, $new_db_pass, $new_db_name);
                 $db_new->query($sql);
                 //notification
                 $notice = 'gmenu';

@@ -1,16 +1,12 @@
-{% set table_name = 'ipfs' %}
-{% if get_table_count(table_name) == '0' %}
-{% else %}
 [
-  {% for file in select_table_data(table_name) %}
-    {% if file.id %}
+{% for blog in select_table_data('blog') %}
+  {% if blog.id %}
+    {% set cat = select_table_row_data('category', 'id', blog.category).name %}
     {
-      "title"    : "{{file.filename}}",
-      "url"      : "/view/{{file.id}}",
-      "duoi"      : "{{file.filename|split('.')|last}}"
-    }{% if loop.last==false %}, {% endif %}
-    {% endif %}
-  {% endfor %}
-
+      "title"    : "{{blog.title}}",
+      "url"      : "/view/{{blog.id}}-{{blog.slug}}.html",
+      "cat"      : "{{cat}}"
+    }{% if loop.last == false %}, {% endif %}
+  {% endif %}
+{% endfor %}
 ]
-{% endif %}

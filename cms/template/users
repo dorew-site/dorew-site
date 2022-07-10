@@ -1,0 +1,36 @@
+{% use '_layout' %}
+{% from '_functions' import paging %}
+{% from '_users' import maunick,getAvtUser %}
+
+{% set title = 'Danh sách thành viên' %}
+{{block('head')}}
+
+{% set table_name = 'users' %}
+<div class="phdr"><i class="fa fa-users" aria-hidden="true"></i> Danh sách thành viên</div>
+
+{% set data = select_table_data(table_name, 'id', 'asc') %}
+{% set total = get_table_count(table_name) %}
+{% set per = '10' %}
+{% set page_max = total//per %}
+{% if total//per != total/per %}
+  {% set page_max = total//per+1 %}
+{% endif %}
+{% set p = url[1]|default(1) %}
+{% if p matches '/[a-zA-z]|%/' or p < 1 %}{% set p = 1 %}{% endif %}
+{% if p > page_max %}{% set p = page_max %}{% endif %}
+{% set st=p*per-per %}
+{% if total == '0' %}
+  <div class="list1">Chưa có thành viên nào</div>
+{% else %}
+  {% for user in data|slice(0,total)|slice(st,per) %}
+    {% if user.id and user.nick %}
+      <div class="list1"> #ID {{user.id}}: 
+        <img src="{{getAvtUser(user.nick)}}" class="imgAvtUser" width="20px" /> 
+        <a href="/user/{{user.nick}}"><b>{{maunick(user.nick)}}</b></a>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+{{paging('users/',p,page_max)|replace({'/=':'/'})|raw}}
+
+{{block('end')}}

@@ -1,0 +1,26 @@
+{% use '_layout' %}
+
+{{block('head')}}
+
+{% if is_login() %}
+  <div class="phdr"><i class="fa fa-sign-out" aria-hidden="true"></i> Đăng Xuất</div>
+  {% set check = get_post('logout') %}
+  {% if request_method()|lower == 'post' %}
+    {% if check %}
+      {{delete_cookie('dorew')}}
+      <div class="list1">Đăng xuất thành công. <a href="/">Về trang chủ</a></div>
+      {{redirect('/')}}
+    {% endif %}
+  {% else %}
+    <div class="menu" style="text-align:center">Bạn muốn đăng xuất.!?<br/>
+      <form method="post" action="">
+        <input type="submit" name="logout" value="Đồng ý" /> 
+        <a href="/" class="btn">Về trang chủ</a>
+      </form>
+    </div>
+  {% endif %}
+{% else %}
+  {{redirect('/')}}
+{% endif %}
+
+{{block('end')}}

@@ -1,0 +1,63 @@
+{% use '_layout' %}
+
+{% set i=now|date("i","Asia/Ho_Chi_Minh")-15 %}{% if i <0%}{% set i=60+i %}{% endif %}
+{% set idNow = get_table_count('chat') %}
+
+{% if is_login() %}
+  <div class="phdr"><i class="fa fa-weixin" aria-hidden="true"></i> Trò chuyện</div>
+  <div class="gmenu"><i class="fa fa-question-circle"></i> Nếu xảy ra lỗi khi Chat, hãy vui lòng <a href="/">Refresh</a> lại trang</div>
+  {% set token = random(100000) %}
+  <div class="menu">
+    {{block('toolbar')}}
+      <form id="form" action="" method="POST" name="form">
+        <textarea type= "text" id="postText" name="msg" rows="3"></textarea><br/>
+        <button name="submit" type="submit" id="submit"> Chat</button> 
+        <a id="upload">[ <i class="fa fa-upload" aria-hidden="true"></i> ]</a>
+        <a id="upload2">[ <i class="fa fa-cube" aria-hidden="true"></i> ]</a>
+        <input style="display:none" type="file" id="f" accept="image/*">
+        <input style="display:none" type="file" id="f2">
+        <input type="hidden" name="token" value="{{token}}"/>
+      </form>
+    </div>
+  </div>
+  <div id="alert"></div>
+  <div id="postText"></div>
+  <div id="idChat">
+</div>
+<div class="topmenu" align="center">
+  <div class="pagination" id="phan-trang"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+<script src="/chat_nft.js?3" type="text/javascript"></script>
+<script src="/chat_imgur.js" type="text/javascript"></script>
+<script src="/textarea-improved5.js" type="text/javascript"></script>
+<script type="text/javascript">
+
+
+  {# giải thích cách hoạt động của cái chat này - éo ghi  lại sao này éo nhớ nổi
+1.   load all chat  ở  chatlist
+2. lấy tổng ID chat hiện tại  - totalChat
+3. Auto refesh kiểm tra tổng số chat hiện tại - nowChat - fetch ở chat_count
+4. Nếu nowChat lớn hơn totalChat thì thêm các chat mới - từ chat_ele
+5. xóa phần tử chat cuối cùng
+
+A. Ưu điểm của chat: có thể xem được video mới, có thể copy được nội dung chat trên điện thoại
+B. Bug đã biết:  chat nhanh quá thì bị cập nhật sai =))
+
+Dai 2-2-2022 ~ code từ mùng 1 đến mùng 2 Tết
+ #}
+
+  var totalChat = "{{idNow}}";
+
+  var pageID = 1;
+
+  var chatbox="../chat_list";loadcontent='<div class="list1">Đang tải dữ liệu <i class="fa fa-spin fa-hourglass-half"></i></div>',$(document).ready(function(){$("#idChat").html(loadcontent),$.get(chatbox,function(t){$("#idChat").html(t).hide().slideDown("slow")});var a=$("#form"),e=$("#submit"),i=$("#alert"),n=$("#postText");a.on("submit",function(t){return t.preventDefault(),""==n?(i.show(),i.text("Bạn chưa nhập nội dung !!!"),$("#postText").focus(),!1):void $.ajax({url:"../chat_send",type:"POST",timeout:5e3,dataType:"html",data:a.serialize(),beforeSend:function(){i.fadeOut(),e.html('Đang gửi <i class="fa fa-spinner fa-spin fa-fw"></i>')},success:function(t){$.get(chatbox,function(t){$("#idChat").html(t).hide().slideDown("slow"),totalChat++,phanTrangChat(totalChat,pageID)}),a.trigger("reset"),$("#postText").focus(),$("#postText").val(""),e.html('<i class="fa fa-check" aria-hidden="true"></i> Chat')},error:function(t){console.log(t)}})})});
+
+  async function gogoChat(){reload_chat=setInterval(async function(){fetch("/chat_count").then(t=>t.json()).then(t=>{for(var a=t;a>totalChat;){totalChat++;var m="../chat_ele?chatID="+totalChat;$.get(m,function(t){$("#idChat").prepend(t),$("#idChat .list1:last").remove(),phanTrangChat(totalChat,pageID)})}})},2e3)}
+
+
+  function phanTrangChat(a,p){var n=1,n=0<a%10?Math.floor(a/10)+1:Math.floor(a/10);console.log("Tong chat"+a),console.log("Tong page "+n),$("#phan-trang").empty();var e=p-1,g=p-2,h=Number(p)+1,a=Number(p)+2;1<p&&$("#phan-trang").append('<a class="pagenav" href="/chat_all?page='+e+'">«</a>'),3<p&&$("#phan-trang").append('<a class="pagenav" href="/chat_all?page=1">1</a>'),4<p&&$("#phan-trang").append("..."),2<p&&$("#phan-trang").append('<a class="pagenav" href="/chat_all?page='+g+'">'+g+"</a>"),1<p&&$("#phan-trang").append('<a class="pagenav" href="/chat_all?page='+e+'">'+e+"</a>"),$("#phan-trang").append('<span class="current"><b>'+p+"</b></span>"),p<n-1&&$("#phan-trang").append('<a class="pagenav" href="/chat_all?page='+h+'">'+h+"</a>"),p<n-2&&$("#phan-trang").append('<a class="pagenav" href="/chat_all?page='+a+'">'+a+"</a>"),p<n-3&&$("#phan-trang").append("..."),p<n&&$("#phan-trang").append('<a class="pagenav" href="/chat_all?page='+n+'">'+n+"</a>"),p<n&&$("#phan-trang").append('<a class="pagenav" href="/chat_all?page='+h+'">»</a>')}gogoChat(),phanTrangChat(totalChat,pageID);
+
+</script>
+{% endif %}

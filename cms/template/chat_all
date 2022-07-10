@@ -1,0 +1,130 @@
+{% use '_layout' %}
+
+{% set title = 'Lịch sử Phòng chat' %}
+{{block('head')}}
+
+{% set idNow = get_table_count('chat') %}
+{% set pageID='1' %}
+{% set getPageID = get_get('page') %}
+{%  if  getPageID %}
+    {% set pageID = getPageID %}
+{% endif %}
+
+
+
+
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.7.0/jquery.validate.min.js"></script>
+
+<div class="phdr"><i class="fa fa-weixin" aria-hidden="true"></i> Trò chuyện/ <i class="fa fa-clock-o"></i> <span id="TimeNow"></span></div>
+<script type="text/javascript">
+function TimeNow(){var e=new Date,t=e.getDate()+"-"+(e.getMonth()+1)+"-"+e.getFullYear()+" "+(e.getHours()+":"+e.getMinutes()+":"+e.getSeconds());document.getElementById("TimeNow").innerHTML=t}
+setInterval(TimeNow, 1000);
+</script>
+
+
+
+
+
+
+
+
+	<div id="idChat"></div>
+	<div class="topmenu" align="center">
+	<div class="pagination" id="phan-trang"></div>
+	</div>
+
+
+
+
+
+<script>
+var totalChat = "{{idNow}}";
+var pageID = {{pageID}};
+
+
+
+
+function phanTrangChat(totalChat,pageID){
+              var tongPage = 1;
+              if (totalChat % 10 > 0) {
+                  tongPage = Math.floor(totalChat / 10) + 1;
+              }
+              else {
+                  tongPage = Math.floor(totalChat / 10);
+              }
+
+
+              console.log('Tong chat' + totalChat);
+              console.log('Tong page ' + tongPage);
+              $("#phan-trang").empty();
+              var pageIDm1=pageID-1;
+              var pageIDm2=pageID-2;
+              var pageIDp1=Number(pageID)+1;
+              var pageIDp2=Number(pageID)+2;
+
+              if( pageID>1 ){
+                $('#phan-trang').append('<a class="pagenav" onclick="loadTrang(' + totalChat+','+pageIDm1+')" >«</a>');
+              }
+              if( pageID>3 ){
+                $('#phan-trang').append('<a class="pagenav" onclick="loadTrang(' + totalChat+',1)" >1</a>');
+              }
+              if( pageID>4 ){
+                $('#phan-trang').append('...');
+              }
+              if( pageID>2 ){
+                $('#phan-trang').append('<a class="pagenav" onclick="loadTrang(' + totalChat+','+pageIDm2+')" >'+pageIDm2+'</a>');
+              }
+              if( pageID>1 ){
+                $('#phan-trang').append('<a class="pagenav" onclick="loadTrang(' + totalChat+','+pageIDm1+')" >'+pageIDm1+'</a>');
+              }
+              $('#phan-trang').append('<span class="current"><b>'+pageID+'</b></span>');
+              if( pageID<tongPage-1 ){
+                $('#phan-trang').append('<a class="pagenav" onclick="loadTrang(' + totalChat+','+pageIDp1+')" >'+pageIDp1+'</a>');
+              }
+              if( pageID<tongPage-2 ){
+                $('#phan-trang').append('<a class="pagenav" onclick="loadTrang(' + totalChat+','+pageIDp2+ ') ">'+pageIDp2+'</a>');
+              }
+              if( pageID<tongPage-3 )
+                $('#phan-trang').append('...');
+              if( pageID<tongPage ){
+                $('#phan-trang').append('<a class="pagenav" onclick="loadTrang(' + totalChat+','+tongPage+')" >'+tongPage+'</a>');
+              }
+              if( pageID<tongPage ){
+                $('#phan-trang').append('<a class="pagenav" onclick="loadTrang(' + totalChat+','+pageIDp1+')" >»</a>');
+              }
+}
+
+
+function loadTrang(totalChat,pageID){
+$("#idChat").empty();
+
+var chatli = "../chat_list?page=" + pageID;
+$.get(chatli, function(t) {
+    $("#idChat").append(t);
+});
+
+	phanTrangChat(totalChat,pageID);
+
+
+}
+
+
+	phanTrangChat(totalChat,pageID);
+
+	loadTrang(totalChat,pageID);
+
+
+
+
+</script>
+
+
+
+
+
+
+
+
+{{block('end')}}

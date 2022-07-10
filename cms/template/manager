@@ -1,0 +1,61 @@
+{% use '_layout' %}
+{% set url = get_uri_segments() %}
+
+{% set title = 'Bảng quản trị' %}
+{% from '_functions' import paging, ago %}
+
+{% set user = select_table_row_data('users', 'nick', is_login()) %}
+{% if not is_login() or user.level < 120 %}
+  {{redirect('/')}}
+{% endif %}
+
+{{block('head')}}
+{% if url[1] == 'list' %}
+  {% set table_name = 'blog' %}
+  {% set data = select_table_data(table_name, 'id', 'desc') %}
+  {% set total = get_table_count(table_name) %}
+  <div class="phdr"><b><i class="fa fa-book" aria-hidden="true"></i> Danh sách bài viết</b></div>
+  {% set per = '10' %}
+  {% set page_max = total//per %}
+  {% if total//per != total/per %}
+    {% set page_max = total//per+1 %}
+  {% endif %}
+  {% set p = url[2]|default(1) %}
+  {% if p matches '/[a-zA-z]|%/' or p < 1 %}{% set p = 1 %}{% endif %}
+  {% if p > page_max %}{% set p = page_max %}{% endif %}
+  {% set st=p*per-per %}
+  {% if total == '0' %}
+    <div class="list1">Chưa có bài viết nào</div>
+  {% else %}
+    {% for blog in data|slice(0,total)|slice(st,per) %}
+      {% if blog.id %}
+        {% set cat = select_table_row_data('category', 'id', blog.category).name %}
+        <div class="{% if blog.sticked=='y' %}sticked{% else %}list1{% endif %}">
+          <table cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td>
+                <span class="topic cat_{{random(['red','blue','green','orange'])}}"><i class="fa fa-{{random(['rocket','plane','bicycle','subway','train','motorcycle','bus','car'])}}"></i> {{cat}}</span> 
+                {% if blog.blocked == 'y' %}<i class="fa fa-lock" style="color:red" aria-hidden="true"></i> {% endif %}<a href="/view/{{blog.id}}-{{blog.slug}}.html"> {{blog.title}}</a>
+                <div class="sub"><small><i class="fa fa-eye" aria-hidden="true"></i> {{blog.view}} / <i class="fa fa-clock-o"></i> {{ago(blog.time)}}</small></div>
+              </td>
+              <td align="right"><b><a href="/category/edit-post/{{blog.id}}"><i class="fa fa-pencil-square-o" aria-hidden="true"></i></a> / <a href="/category/delete-post/{{blog.id}}"><i class="fa fa-trash-o" aria-hidden="true"></i></a></b></td>
+            </tr>
+          </table>
+        </div>
+      {% endif %}
+    {% endfor %}
+    {{paging('manager/list/',p,page_max)|replace({'/=':'/'})|raw}}
+  {% endif %}
+{% else %}
+  <div class="phdr"><b><i class="fa fa-tachometer" aria-hidden="true"></i> Quản trị</b></div>
+  <div class="list1">
+    <i class="fa fa-pencil-square" aria-hidden="true"></i> <a href="/category/new-post">Viết bài mới</a>
+  </div>
+  <div class="list1">
+    <i class="fa fa-cube" aria-hidden="true"></i> <a href="/category/new-cat">Tạo thư mục</a>
+  </div>
+  <div class="list1">
+    <i class="fa fa-rss" aria-hidden="true"></i> <a href="/manager/list">Danh sách bài viết</a>
+  </div>
+{% endif %}
+{{block('end')}}

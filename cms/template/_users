@@ -1,0 +1,37 @@
+{# Các hàm thao tác với bảng `users` #}
+
+{# làm việc với cookie #}
+{% macro auto() %}{% for i in 1..30%}{{random('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')}}{% endfor %}{% endmacro %}
+
+{#===========================================================================================================#}
+
+{# màu nick #}
+{% macro maunick(tenuser) %}
+{% set user = select_table_row_data('users', 'nick', tenuser) %}
+<b>{% if user.level  < '0'%} {#người bị cấm#}
+<s><font color="LightGray">{{user.name}}</font></s>
+{% elseif user.level  <= '80'%} {#người bình thường#}
+<font color="DarkSlateGrey">{{user.name}}</font>
+{% elseif user.level <= '90'  %} {#người đăng bài#}
+<font color="RoyalBlue">{{user.name}}</font>
+{% elseif user.level <= '100' %} {#mod#}
+<font color="ForestGreen">{{user.name}}</font>
+{% elseif user.level <= '110' %} {#smod#}
+<font color="RebeccaPurple">{{user.name}}</font>
+{% elseif user.level <= '120' %} {#admin#}
+<span class="lv-120">{{user.name}}</span>
+{% elseif user.level <='126' %} {#sáng viên#}
+<span class="lv-126">{{user.name}}</span>
+{% elseif user.level >'126' %} {#sáng viên max#}
+<span class="lv-127">{{user.name}}</span>
+{% endif %}</b>
+{% endmacro %}
+
+
+{#===========================================================================================================#}
+
+{# ảnh đại diện #}
+{% macro getAvtUser(tenuser) %}{% set user = select_table_row_data('users', 'nick', tenuser) %}{% set avatar0 =  user.avatar %}{% set userlv = user.level %}{% if avatar0 > '0' and avatar0 < '30' %} {% if avatar0 == '1' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/badger.png' %}{% elseif avatar0 == '2' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/bear.png' %}{% elseif avatar0 == '3' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/bull.png' %}{% elseif avatar0 == '4' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/camel.png' %}{% elseif avatar0 == '5' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/cat.png' %}{% elseif avatar0 == '6' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/dog.png' %}{% elseif avatar0 == '7' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/dolphin.png' %}{% elseif avatar0 == '8' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/duck.png' %}{% elseif avatar0 == '9' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/hamster.png' %}{% elseif avatar0 == '10' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/hippo.png' %}{% elseif avatar0 == '11' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/kangaroo.png' %}{% elseif avatar0 == '12' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/koala.png' %}{% elseif avatar0 == '13' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/lama.png' %}{% elseif avatar0 == '14' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/monkey.png' %}{% elseif avatar0 == '15' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/moose.png' %}{% elseif avatar0 == '16' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/mouse.png' %}{% elseif avatar0 == '17' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/owl.png' %}{% elseif avatar0 == '18' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/penguin.png' %}{% elseif avatar0 == '19' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/pig.png' %}{% elseif avatar0 == '20' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/rabbit.png' %}{% elseif avatar0 == '21' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/raven.png' %}{% elseif avatar0 == '22' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/rooster.png' %}{% elseif avatar0 == '23' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/seal.png' %}{% elseif avatar0 == '24' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/sheep.png' %}{% elseif avatar0 == '25' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/snake.png' %}{% elseif avatar0 == '26' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/turtle.png' %}{% elseif avatar0 == '27' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/unicorn.png' %}{% elseif avatar0 == '28' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/vulture.png' %}{% elseif avatar0 == '29' %}{% set avatar0 = 'https://moleys.github.io/assets/avatar/zebra.png' %}{% endif %}{% else %}{#{% set avatar0 = avatar0|replace({'.jpg': 'b.jpg', '.png': 'b.png'}) %}#}{% endif %}{% if userlv<'0' %}https://i.imgur.com/rnZNYnb.jpg{% else %}{{avatar0}}{% endif %}{% endmacro %}
+
+
+

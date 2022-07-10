@@ -1,0 +1,65 @@
+{# bảng `users`: id, nick, pass, name, level, on, reg, auto #}
+
+{% use '_layout' %}
+{% from '_functions' import paging,ago %}
+{% from '_users' import maunick,getAvtUser %}
+
+{% set url = get_uri_segments() %}
+{% set user = select_table_row_data('users', 'nick', is_login()) %}
+{% set user_nick = url[1] %}
+{% set user_data = select_table_row_data('users', 'nick', user_nick) %}
+{% if not user_data.id %}
+  {% set user_data = user %}
+{% endif %}
+
+{% if not is_login() %}
+  {{redirect('/')}}
+{% endif %}
+
+{% if url[1] == 'edit' %}
+  {% set title = 'Tường nhà' %}
+{% endif %}
+{{block('head')}}
+  <div class="phdr"><i class="fa fa-user-circle" aria-hidden="true"></i> Trang cá nhân {{user_data.name}}</div>
+  <div style="background:#E8FFFE;border:solid #e9e9e9;border-width:0 1px 1px;padding:5px;word-wrap:break-word;text-align: center;">
+    <img class="imgAvtUser" src="{{getAvtUser(user_data.nick)}}" width="120" height="120" /><br/><a href="/user/{{user_data.nick}}"><b>{{maunick(user_data.nick)}}</b></a>
+  </div>
+  <div class="list1">
+    <i class="fa fa-id-card" aria-hidden="true"></i> ID: {{user_data.id}}
+  </div>
+  <div class="list1">
+    <i class="fa fa-circle-o-notch" aria-hidden="true"></i> Hoạt động: {% if user_data.on >= 'now'|date('U')-300 %}Đang hành tẩu{% else %}{{ago(user_data.on)}}{% endif %}
+  </div>
+
+  {% set data = select_table_where_data('blog', 'author', user_data.nick) %}
+  {% set total = data.total|default(0) %}
+  {% if total > 0 %}
+    <div class="phdr"><b><i class="fa fa-book" aria-hidden="true"></i> Danh sách bài viết</b></div>
+    {% set per = '10' %}
+    {% set page_max = total//per %}
+    {% if total//per != total/per %}
+      {% set page_max = total//per+1 %}
+    {% endif %}
+    {% set p = url[2]|default(1) %}
+    {% if p matches '/[a-zA-z]|%/' or p < 1 %}{% set p = 1 %}{% endif %}
+    {% if p > page_max %}{% set p = page_max %}{% endif %}
+    {% set st=p*per-per %}
+    {% for blog in data|slice(0,total)|slice(st,per) %}
+      {% if blog.id %}
+        {% set cat = select_table_row_data('category', 'id', blog.category).name %}
+        <div class="{% if blog.sticked=='y' %}sticked{% else %}list1{% endif %}">
+          <table cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td>
+                <span class="topic cat_{{random(['red','blue','green','orange'])}}"><i class="fa fa-{{random(['rocket','plane','bicycle','subway','train','motorcycle','bus','car'])}}"></i> {{cat}}</span> 
+                {% if blog.blocked == 'y' %}<i class="fa fa-lock" style="color:red" aria-hidden="true"></i> {% endif %}<a href="/view/{{blog.id}}-{{blog.slug}}.html"> {{blog.title}}</a>
+                <div class="sub"><small><i class="fa fa-eye" aria-hidden="true"></i> {{blog.view}} / <i class="fa fa-clock-o"></i> {{ago(blog.time)}}</small></div>
+              </td>
+            </tr>
+          </table>
+        </div>
+      {% endif %}
+    {% endfor %}
+    {{paging('users/'~user_data.nick~'/',p,page_max)|replace({'/=':'/'})|raw}}
+  {% endif %}
+{{block('end')}}

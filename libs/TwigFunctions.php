@@ -16,9 +16,15 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
 {
     public function __construct()
     {
-        global $db;
-        $this->db = $db;
-        $this->chatbox = $_SERVER['DOCUMENT_ROOT'] . '/cms/chat/chat_text.php';
+        global $db_host, $db_user, $db_pass, $db_name, $default_login;
+        $this->core_cookie = $default_login;
+        $this->db = new mysqli($db_host, $db_user, $db_pass, $db_name);
+        $this->conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+        if (empty($this->db) || empty($this->conn)) {
+            //throw new Exception('Connect database failed');
+            header('Location: /cms');
+            exit();
+        }
     }
 
     public function getFunctions()
@@ -41,9 +47,6 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
             new \Twig\TwigFunction('select_table_data', [$this, 'select_table_data']),
             new \Twig\TwigFunction('select_table_row_data', [$this, 'select_table_row_data']),
             new \Twig\TwigFunction('select_table_where_data', [$this, 'select_table_where_data']),
-            
-            new \Twig\TwigFunction('get_chat_total', [$this, 'get_chat_total']),
-            new \Twig\TwigFunction('get_chat', [$this, 'get_chat']),
 
             new \Twig\TwigFunction('cancel_xss', [$this, 'cancel_xss']),
             new \Twig\TwigFunction('is_login', [$this, 'is_login']),
@@ -72,50 +75,86 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
     -----------------------------------------------------------------
     */
 
-    /* --- TABLE --- */
+    /* --- QUERY AND PROCESS DATA IN TABLE --- */
 
-    function create_table($table_name = null)
+    private function error($msg)
     {
-        if (!$table_name) {
-            return 'There is not table_name in create_table()';
+        if (!empty($msg)) {
+            throw new Exception($msg);
+            return true;
+        }
+        return false;
+    }
+
+    function query($sql)
+    {
+        if (empty($sql)) {
+            $this->error('Invalid query string');
+            return false;
+        }
+        $result = $this->db->query($sql);
+        if (!$result || $result === false) {
+            $this->error('Query failed');
+            return false;
+        }
+        if ($result !== true) {
+            $this->$result = $result;
+        }
+        return true;
+    }
+
+    function table_exists($table_name)
+    {
+        $sql = "SHOW TABLES LIKE '$table_name'";
+        $result = $this->db->query($sql);
+        if ($result->num_rows > 0) {
+            return true;
         } else {
-            if (!$this->db->table_exists($table_name)) {
-                $sql = "CREATE TABLE IF NOT EXISTS `$table_name` (
-                    `id` int(10) UNSIGNED NULL AUTO_INCREMENT,
-                    `time` int(11) NOT NULL,
-                    PRIMARY KEY (`id`)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-                $this->db->query($sql);
-                return 'Table `' . $table_name . '` created with 2 fields: id, time';
-            } else {
-                return 'Table `' . $table_name . '` already exists';
-            }
+            return false;
         }
     }
 
-    function create_table_with_column($table_name, $array_column)
+    /* --- MANIPULATING TABLES --- */
+
+    /* TABLE */
+
+    function create_table_with_column($table_name = null, $array_column = null)
     {
-        if (!$table_name) {
-            return 'There is not table_name in create_table()';
+        if (!$table_name || !$array_column) {
+            return 'There is not table_name or columns in create_table_with_column()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 $sql = "CREATE TABLE IF NOT EXISTS `$table_name` (
-                    `id` int(10) UNSIGNED NULL AUTO_INCREMENT,
-                    ";
+                `id` int(10) UNSIGNED NULL AUTO_INCREMENT,
+                ";
                 if (!$array_column) {
                     $sql .= "`time` int(11) NOT NULL,
-                        ";
+                    ";
                 } else {
                     foreach ($array_column as $key => $value) {
                         $sql .= "`$key` $value, ";
                     }
                 }
                 $sql .= "PRIMARY KEY (`id`)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-                $this->db->query($sql);
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+                mysqli_query($this->conn, $sql);
                 return 'Table `' . $table_name . '` created with your columns';
             } else {
                 return 'Table `' . $table_name . '` already exists';
+            }
+        }
+    }
+
+    function create_table($table_name)
+    {
+        if (!$table_name) {
+            return 'There is not table_name in create_table()';
+        } else {
+            if ($this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` already exists';
+            } else {
+                $column = ["time" => "`time` int(11) NOT NULL"];
+                return $this->create_table_with_column($table_name, $column);
             }
         }
     }
@@ -125,12 +164,27 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         if (!$table_name) {
             return 'There is not table_name in drop_table()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
-                $sql = "DROP TABLE IF EXISTS `$table_name`;";
-                $this->db->query($sql);
+                $sql = "DROP TABLE `$table_name`";
+                mysqli_query($this->conn, $sql);
                 return 'Table `' . $table_name . '` dropped';
+            }
+        }
+    }
+
+    function rename_table($table_name = null, $new_table_name = null)
+    {
+        if (!$table_name || !$new_table_name) {
+            return 'There is not table_name or new_table_name in rename_table()';
+        } else {
+            if (!$this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` does not exist';
+            } else {
+                $sql = "RENAME TABLE `$table_name` TO `$new_table_name`";
+                mysqli_query($this->conn, $sql);
+                return 'Table `' . $table_name . '` renamed to `' . $new_table_name . '`';
             }
         }
     }
@@ -140,42 +194,45 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         if (!$table_name) {
             return 'There is not table_name in get_data_count_table()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
-                $query = $this->db->get($table_name);
-                return $query->num_rows();
+                $sql = "SELECT COUNT(*) FROM `$table_name`";
+                $result = mysqli_query($this->conn, $sql);
+                $row = mysqli_fetch_row($result);
+                return $row[0] ? $row[0] : 0;
             }
         }
     }
 
-    /* --- COLUMN --- */
+    /* COLUMN */
 
     function create_column_table($table_name = null, $column_name = null, $column_type = null)
     {
         if (!$table_name || !$column_name || !$column_type) {
             return 'There is not table_name or column_name or column_type in create_column_table()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "ALTER TABLE $table_name ADD $column_name $column_type";
-                $this->db->query($sql);
+                mysqli_query($this->conn, $sql);
                 return 'Column ' . $column_name . ' in table `' . $table_name . '` created with type ' . $column_type;
             }
         }
     }
+
 
     function drop_column_table($table_name = null, $column_name = null)
     {
         if (!$table_name || !$column_name) {
             return 'There is not table_name or column_name in drop_column_table()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "ALTER TABLE $table_name DROP $column_name";
-                $this->db->query($sql);
+                mysqli_query($this->conn, $sql);
                 return 'Column ' . $column_name . ' in table `' . $table_name . '` dropped';
             }
         }
@@ -183,33 +240,56 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
 
     /* --- ROW --- */
 
+    function insert_row_array_table($table_name = null, $array_row = null)
+    {
+        if (!$table_name || !$array_row) {
+            return 'There is not table_name or array_row in create_row_table()';
+        } else {
+            if (!$this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` does not exist';
+            } else {
+                $sql = "INSERT INTO `$table_name` SET ";
+                foreach ($array_row as $key => $value) {
+                    $sql .= "`$key` = '$value', ";
+                }
+                $sql = substr($sql, 0, -2);
+                mysqli_query($this->conn, $sql);
+                return 'Rows in table `' . $table_name . '` created';
+            }
+        }
+    }
+
     function insert_row_table($table_name = null, $column_name = null, $column_value = null)
     {
         if (!$table_name || !$column_name || !$column_value) {
             return 'There is not table_name or column_name or column_value in create_row_table()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
-                /*
-                $sql = "INSERT INTO $table_name ($column_name) VALUES ($column_value)";
-                $this->db->query($sql);
-                */
-                $this->db->insert($table_name, [$column_name => $column_value]);
-                return 'ok';
+                $array = [$column_name => $column_value];
+                return $this->insert_row_array_table($table_name, $array);
             }
         }
     }
-    
-    function insert_row_array_table($table_name = null, $array_row = null) {
-        if (!$table_name || !$array_row) {
-            return 'There is not table_name or array_row in create_row_table()';
+
+    function update_row_array_table($table_name = null, $array_row = null, $where_column_name = null, $where_column_value = null)
+    {
+        if (!$table_name || !$array_row || !$where_column_name || !$where_column_value) {
+            return 'There is not table_name or array_row or where_column_name or where_column_value in update_row_array_table()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
-                $this->db->insert($table_name, $array_row);
-                return 'ok';
+                //{"column_name1":"column_value1","column_name2":"column_value2"}
+                $sql = "UPDATE $table_name SET ";
+                foreach ($array_row as $key => $value) {
+                    $sql .= "`$key` = '$value', ";
+                }
+                $sql = substr($sql, 0, -2);
+                $sql .= " WHERE `$where_column_name` = '$where_column_value'";
+                mysqli_query($this->conn, $sql);
+                return 'Rows in table `' . $table_name . '` updated';
             }
         }
     }
@@ -219,30 +299,11 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         if (!$table_name || !$column_name || !$column_value || !$where_column_name || !$where_column_value) {
             return 'There is not table_name or column_name or column_value or where_column_name or where_column_value in update_row_table()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
-                /*
-                $sql = "UPDATE $table_name SET $column_name = $column_value WHERE $where_column_name = $where_column_value";
-                $this->db->query($sql);
-                */
-                $this->db->where($where_column_name, $where_column_value);
-                return $this->db->update($table_name, [$column_name => $column_value]);
-            }
-        }
-    }
-    
-    function update_row_array_table($table_name = null, $array_row = null, $where_column_name = null, $where_column_value = null)
-    {
-        if (!$table_name || !$array_row || !$where_column_name || !$where_column_value) {
-            return 'There is not table_name or array_row or where_column_name or where_column_value in update_row_array_table()';
-        } else {
-            if (!$this->db->table_exists($table_name)) {
-                return 'Table `' . $table_name . '` does not exist';
-            } else {
-                //{"column_name1":"column_value1","column_name2":"column_value2"}
-                $this->db->where($where_column_name, $where_column_value);
-                $this->db->update($table_name, $array_row);
+                $array = [$column_name => $column_value];
+                return $this->update_row_array_table($table_name, $array, $where_column_name, $where_column_value);
             }
         }
     }
@@ -256,8 +317,8 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "DELETE FROM $table_name WHERE $column_name = $column_value";
-                $this->db->query($sql);
-                return 'ok';
+                mysqli_query($this->conn, $sql);
+                return 'Rows in table `' . $table_name . '` deleted';
             }
         }
     }
@@ -269,12 +330,13 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         if (!$table_name || !$column_name || !$column_value) {
             return 'There is not table_name or row or column_name or column_value in select_table_row_data()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
-                $this->db->where($column_name, $column_value);
-	            $data = $this->db->get($table_name)->row();
-	            return $data;
+                $sql = "SELECT * FROM $table_name WHERE $column_name = '$column_value'";
+                $query = mysqli_query($this->conn, $sql);
+                $row = mysqli_fetch_assoc($query);
+                return $row;
             }
         }
     }
@@ -286,12 +348,16 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         if (!$table_name) {
             return 'There is not table_name in select_table_data()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "SELECT * FROM $table_name ORDER BY $order $sort";
-                $query = $this->db->query($sql);
-                return $query->result_array();
+                $query = mysqli_query($this->conn, $sql);
+                $rows = [];
+                while ($row = mysqli_fetch_assoc($query)) {
+                    $rows[] = $row;
+                }
+                return $rows;
             }
         }
     }
@@ -303,14 +369,17 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         if (!$table_name || !$where_column_name || !$where_column_value) {
             return 'There is not table_name or where_column_name or where_column_value in select_table_where_data()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
-                $this->db->where($where_column_name, $where_column_value);
-                $this->db->order_by($order, $sort);
-                $data = $this->db->get($table_name)->result();
-                $total = ['total' => $data ? count($data) : 0];
-                return array_merge($data, $total);
+                $sql = "SELECT * FROM $table_name WHERE $where_column_name = '$where_column_value' ORDER BY $order $sort";
+                $query = mysqli_query($this->conn, $sql);
+                $rows = [];
+                while ($row = mysqli_fetch_assoc($query)) {
+                    $rows[] = $row;
+                }
+                $total = ['total' => $rows ? count($rows) : 0];
+                return array_merge($total, $rows);
             }
         }
     }
@@ -320,10 +389,10 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
     Additional Functions for TWIG
     -----------------------------------------------------------------
     */
-    
+
     function cancel_xss($string)
     {
-	$string = preg_replace('/\\\\/', '\\', $string);
+        $string = preg_replace('/\\\\/', '\\', $string);
         $string = str_replace('\&quot;', '&quot;', $string);
         $string = str_replace('\"', '&quot;', $string);
         $string = str_replace("\'", '&#039;', $string);
@@ -333,17 +402,17 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
     function is_login()
     {
         $table_name = 'users';
-        $token = $this->get_cookie('dorew') ? $this->get_cookie('dorew') : 'bot';
-        $this->db->where('auto', $token);
-        $data = $this->db->get($table_name)->row();
+        $core_cookie = $this->core_cookie;
+        $token = $this->get_cookie($core_cookie) ? $this->get_cookie($core_cookie) : 'bot';
+        $data = $this->select_table_row_data($table_name, 'auto', $token);
         if ($data) {
-            return $data->nick;
+            return $data['nick'];
         } else {
             return false;
         }
     }
 
-    function bb_default($text) 
+    function bb_default($text)
     {
         //$text = htmlspecialchars($text);
         //$text = nl2br($text);
@@ -461,61 +530,5 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         $string = preg_replace("/[\s-]/", "-", $string);
         $string = mb_strtolower($string, 'utf8');
         return $string;
-    }
-
-    function get_chat_total()
-    {
-        $data = file_get_contents($this->chatbox);
-        $arr = explode('[end_chat]', $data);
-        return count($arr) - 1;
-    }
-
-    function get_chat($per, $status, $name)
-    {
-        $chatbox = $this->chatbox;
-        $data = file_get_contents($chatbox);
-        $arr = explode('[end_chat]', $data);
-        switch ($status) {
-            case 'sent':
-                $id_chat = $this->get_chat_total() + 1;
-                if (strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
-                    //$name = htmlspecialchars($_POST['name']) ? $_POST['name'] : 'sei';
-                    $content = htmlspecialchars($_POST['msg']) ? $_POST['msg'] : '...';
-                    $content = json_encode($content);
-                    $time = date('U');
-                    $json = '{"name":"' . $name . '","comment":' . $content . ',"time":"' . $time . '"}';
-                    //$chat = json_encode($json);
-                    $chat = '[chat_' . $id_chat . ']' . $json . '[/chat_' . $id_chat . '][end_chat]';
-                    $data_new = $data . $chat;
-                    //lưu chat mới vào $data
-                    file_put_contents($chatbox, $data_new);
-                    //header('Location: ' . $_SERVER['REQUEST_URI']);
-                }
-                $arr_chat = ['total' => $this->get_chat_total()];
-                break;
-            default:
-                $total = count($arr);
-                $page_max = ceil($total / $per);
-                $page = isset($_GET['page']) ? $_GET['page'] : 1;
-                $page = $page > $page_max ? $page_max : $page;
-                $page = $page < 1 ? 1 : $page;
-                $start = ($page - 1) * $per;
-                if ($start <= 0) $start = 0;
-                $end = $start + $per;
-                for ($i = $start; $i <= $end; $i++) {
-                    $location = $start + $i;
-                    if ($arr[$location]) {
-                        $id_chat = $location + 1;
-                        //lấy dữ liệu chat
-                        $chat = $arr[$location];
-                        $chat = str_replace('[chat_' . $id_chat . ']', '', $chat);
-                        $chat = str_replace('[/chat_' . $id_chat . ']', '', $chat);
-                        $json = json_decode($chat, true);
-                        $arr_chat[] = $json;
-                    }
-                }
-                break;
-        }
-        return $arr_chat;
     }
 }
