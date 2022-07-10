@@ -1,4 +1,5 @@
 <?php
+
 /**
  * DorewSite Software
  * Author: Dorew
@@ -204,36 +205,22 @@ function remove_dir($dir)
     }
 }
 
-function movedir($old, $new, $isParent = true)
+function movedir($old_dir, $new_dir)
 {
-    $handler = scandir($old);
-    if ($handler !== false) {
-        if ($isParent && $old != '/') {
-            $end = $new = $new . '/' . end(explode('/', $old));
-            if (is_file($end) || (!is_dir($end) && !mkdir($end)))
-                return false;
-        } else if (!$isParent && !is_dir($new) && !mkdir($new)) {
-            return false;
-        }
-        foreach ($handler as $entry) {
-            if ($entry != '.' && $entry != '..') {
-                $paOld = $old . '/' . $entry;
-                $paNew = $new . '/' . $entry;
-                if (is_file($paOld)) {
-                    if (!copy($paOld, $paNew))
-                        return false;
-                    unlink($paOld);
-                } else if (is_dir($paOld)) {
-                    if (!movedir($paOld, $paNew, false))
-                        return false;
-                } else {
-                    return false;
+    $handler = scandir($old_dir);
+    foreach ($handler as $file) {
+        if ($file != "." && $file != "..") {
+            if (is_dir($old_dir . "/" . $file)) {
+                if (!is_dir($new_dir . "/" . $file)) {
+                    mkdir($new_dir . "/" . $file);
                 }
+                movedir($old_dir . "/" . $file, $new_dir . "/" . $file);
+            } else {
+                copy($old_dir . "/" . $file, $new_dir . "/" . $file);
+                unlink($old_dir . "/" . $file);
             }
         }
-        return rmdir($old);
     }
-    return false;
 }
 
 function file_size($byte)
@@ -249,4 +236,3 @@ function file_size($byte)
     }
     return $result;
 }
-

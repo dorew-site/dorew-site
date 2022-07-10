@@ -23,11 +23,15 @@ if (is_login()) {
     $file_latest_version = 'https://github.com/dorew-site/dorew-site/archive/refs/heads/main.zip';
 
     if (strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
-        $dir_backup = $root . '/backup';
+        $root_backup = $root . '/backup';
+        $backup_tpl = $root_backup . '/template';
+        remove_dir($backup_tpl);
+        mkdir($backup_tpl);
+
         /* BACKUP CURRENT DATA */
-        movedir($dir_tpl, $dir_backup);
+        movedir($dir_tpl, $backup_tpl);
         $save_db_info = $db_host . '|' . $db_user . '|' . $db_pass . '|' . $db_name;
-        file_put_contents($dir_backup . '/core.txt', $save_db_info);
+        file_put_contents($root_backup . '/core.txt', $save_db_info);
 
         /* DELETE OLD VERSION */
         $arr_dir = ['cms', 'libs'];
@@ -51,13 +55,12 @@ if (is_login()) {
             // get file from github
             $file_new_version = file_get_contents($file_latest_version);
             file_put_contents($file_new_version, $file_new_version);
-            // unzip file_new_version to root
+            // open zip file
             $zip = new ZipArchive;
-            $res = $zip->open($file_new_version);
-            if ($res === true) {
-                $zip->extractTo($root);
-                $zip->close();
-            }
+            $zip->open($file_new_version);
+            // extract file to root
+            $zip->extractTo($root);
+            $zip->close();
             $dir_source = $root . '/dorew-site-main';
             foreach ($arr_dir as $new_dir) {
                 $new_dir_path = $dir_ . '/' . $new_dir;
@@ -73,18 +76,23 @@ if (is_login()) {
             }
             // remove dorew-site-main and dorew-site.zip
             remove_dir($dir_source);
-            unlink($file_new_version);
+            //unlink($file_new_version);
+            $rmd = ['version.txt', 'README.md'];
+            foreach ($rmd as $rm) {
+                $rm_path = $root . '/' . $rm;
+                if (is_file($rm_path)) {
+                    unlink($rm_path);
+                }
+            }
         }
 
         /* UPDATE TEMPLATE */
         remove_dir($dir_tpl);
-        $dir_cms = $root . '/cms';
-        $dir_new_tpl = $dir_backup . '/template';
-        movedir($dir_new_tpl, $dir_cms);
-        remove_dir($dir_new_tpl);
+        mkdir($dir_tpl);
+        movedir($backup_tpl, $dir_tpl);
 
         /* UPDATE DB */
-        $db_new_info = file_get_contents($dir_backup . '/core.txt');
+        $db_new_info = file_get_contents($root_backup . '/core.txt');
         $db_new_info = explode('|', $db_new_info);
         $new_db = array(
             'host' => $db_new_info[0],
@@ -98,7 +106,7 @@ if (is_login()) {
         $new_config = str_replace('$db_pass = \'' . $db_pass . '\';', '$db_pass = \'' . $new_db['pass'] . '\';', $new_config);
         $new_config = str_replace('$db_name = \'' . $db_name . '\';', '$db_name = \'' . $new_db['name'] . '\';', $new_config);
         file_put_contents($root . '/cms/core.php', $new_config);
-        unlink($dir_backup . '/core.txt');
+        unlink($root_backup . '/core.txt');
 
         /* GO TO CMS */
         header('Location: /cms');
@@ -157,7 +165,6 @@ if (is_login()) {
     if (!empty($notice)) {
         echo '<div class="rmenu"><i class="fa fa-exclamation-circle" aria-hidden="true"></i> ' . $notice . '</div>';
     }
-
 } else {
     header('Location: /cms');
 }
