@@ -23,6 +23,7 @@ if (is_login()) {
     $file_latest_version = 'https://github.com/dorew-site/dorew-site/archive/refs/heads/main.zip';
 
     if (strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
+        $dir_backup = $root . '/backup';
         /* BACKUP CURRENT DATA */
         movedir($dir_tpl, $dir_backup);
         $save_db_info = $db_host . '|' . $db_user . '|' . $db_pass . '|' . $db_name;

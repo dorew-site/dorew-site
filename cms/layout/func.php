@@ -204,6 +204,38 @@ function remove_dir($dir)
     }
 }
 
+function movedir($old, $new, $isParent = true)
+{
+    $handler = scandir($old);
+    if ($handler !== false) {
+        if ($isParent && $old != '/') {
+            $end = $new = $new . '/' . end(explode('/', $old));
+            if (is_file($end) || (!is_dir($end) && !mkdir($end)))
+                return false;
+        } else if (!$isParent && !is_dir($new) && !mkdir($new)) {
+            return false;
+        }
+        foreach ($handler as $entry) {
+            if ($entry != '.' && $entry != '..') {
+                $paOld = $old . '/' . $entry;
+                $paNew = $new . '/' . $entry;
+                if (is_file($paOld)) {
+                    if (!copy($paOld, $paNew))
+                        return false;
+                    unlink($paOld);
+                } else if (is_dir($paOld)) {
+                    if (!movedir($paOld, $paNew, false))
+                        return false;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return rmdir($old);
+    }
+    return false;
+}
+
 function file_size($byte)
 {
     if ($byte >= '1073741824') {
