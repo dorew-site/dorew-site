@@ -15,6 +15,8 @@ $root = $_SERVER['DOCUMENT_ROOT'];
 $http_host = $_SERVER['HTTP_HOST'];
 $request_uri = $_SERVER['REQUEST_URI'];
 
+$current_version = '0.2.0-RC2';
+
 //database config
 $url_phpmyadmin = 'http://localhost:8080/phpmyadmin';
 $db_host = 'localhost';

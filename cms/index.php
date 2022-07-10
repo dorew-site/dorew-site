@@ -128,6 +128,7 @@ if (!$db) {
             setcookie($account_admin, '', 0);
             header('Location: /cms');
         }
+        include $root . '/cms/layout/act/version.php';
         include $root . '/cms/layout/act/manager.php';
         if (!in_array($type, $list_type)) {
             echo '
