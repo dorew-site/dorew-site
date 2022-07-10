@@ -205,6 +205,24 @@ function remove_dir($dir)
     }
 }
 
+function move_dir($old_dir, $new_dir)
+{
+    $handler = scandir($old_dir);
+    foreach ($handler as $file) {
+        if ($file != "." && $file != "..") {
+            if (is_dir($old_dir . "/" . $file)) {
+                if (!is_dir($new_dir . "/" . $file)) {
+                    mkdir($new_dir . "/" . $file);
+                }
+                move_dir($old_dir . "/" . $file, $new_dir . "/" . $file);
+            } else {
+                copy($old_dir . "/" . $file, $new_dir . "/" . $file);
+                unlink($old_dir . "/" . $file);
+            }
+        }
+    }
+}
+
 function rrmdir($dir)
 {
     if (is_dir($dir)) {

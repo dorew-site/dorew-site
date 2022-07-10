@@ -29,7 +29,7 @@ if (is_login()) {
         mkdir($backup_tpl);
 
         /* BACKUP CURRENT DATA */
-        rcopy($dir_tpl, $backup_tpl);
+        move_dir($dir_tpl, $backup_tpl);
         $save_db_info = $db_host . '|' . $db_user . '|' . $db_pass . '|' . $db_name;
         file_put_contents($root_backup . '/core.txt', $save_db_info);
 
