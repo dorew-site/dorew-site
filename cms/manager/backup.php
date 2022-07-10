@@ -65,7 +65,7 @@ if (is_login()) {
     } else {
         $filename = $_GET['file'];
         //check the existence of the file $filename, if so let's practice
-        if (file_exists($dir_backup . '/' . $filename)) {
+        if (file_exists($dir_backup . '/' . $filename) && !empty($filename)) {
             if ($act == 'use') {
                 //use template
                 remove_dir($dir_tpl);
