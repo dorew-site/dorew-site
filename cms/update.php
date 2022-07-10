@@ -29,7 +29,7 @@ if (is_login()) {
         mkdir($backup_tpl);
 
         /* BACKUP CURRENT DATA */
-        movedir($dir_tpl, $backup_tpl);
+        rcopy($dir_tpl, $backup_tpl);
         $save_db_info = $db_host . '|' . $db_user . '|' . $db_pass . '|' . $db_name;
         file_put_contents($root_backup . '/core.txt', $save_db_info);
 
@@ -51,10 +51,16 @@ if (is_login()) {
 
         /* DOWNLOAD LATEST VERSION */
         $file_new_version = $root . '/dorew-site.zip';
+        if (file_exists($file_new_version)) {
+            unlink($file_new_version);
+        }
+        if (is_dir($root . '/dorew-site-main')) {
+            remove_dir($root . '/dorew-site-main');
+        }
         if (!is_file($file_new_version)) {
             // get file from github
-            $file_new_version = file_get_contents($file_latest_version);
-            file_put_contents($file_new_version, $file_new_version);
+            $file_latest_version = file_get_contents($file_latest_version);
+            file_put_contents($file_new_version, $file_latest_version);
             // open zip file
             $zip = new ZipArchive;
             $zip->open($file_new_version);
@@ -63,15 +69,15 @@ if (is_login()) {
             $zip->close();
             $dir_source = $root . '/dorew-site-main';
             foreach ($arr_dir as $new_dir) {
-                $new_dir_path = $dir_ . '/' . $new_dir;
-                if (is_dir($dir_path)) {
-                    movedir($new_dir_path, $root);
+                $new_dir_path = $dir_source . '/' . $new_dir;
+                if (is_dir($new_dir_path)) {
+                    rcopy($new_dir_path, $root . '/' . $new_dir);
                 }
             }
             foreach ($arr_file as $new_file) {
                 $new_file_path = $dir_source . '/' . $new_file;
                 if (is_file($new_file_path)) {
-                    copy($new_file_path, $root . '/' . $new_file);
+                    rcopy($new_file_path, $root . '/' . $new_file);
                 }
             }
             // remove dorew-site-main and dorew-site.zip
@@ -89,7 +95,7 @@ if (is_login()) {
         /* UPDATE TEMPLATE */
         remove_dir($dir_tpl);
         mkdir($dir_tpl);
-        movedir($backup_tpl, $dir_tpl);
+        rcopy($backup_tpl, $dir_tpl);
 
         /* UPDATE DB */
         $db_new_info = file_get_contents($root_backup . '/core.txt');

@@ -205,22 +205,28 @@ function remove_dir($dir)
     }
 }
 
-function movedir($old_dir, $new_dir)
+function rrmdir($dir)
 {
-    $handler = scandir($old_dir);
-    foreach ($handler as $file) {
-        if ($file != "." && $file != "..") {
-            if (is_dir($old_dir . "/" . $file)) {
-                if (!is_dir($new_dir . "/" . $file)) {
-                    mkdir($new_dir . "/" . $file);
-                }
-                movedir($old_dir . "/" . $file, $new_dir . "/" . $file);
-            } else {
-                copy($old_dir . "/" . $file, $new_dir . "/" . $file);
-                unlink($old_dir . "/" . $file);
-            }
-        }
-    }
+    if (is_dir($dir)) {
+        $files = scandir($dir);
+        foreach ($files as $file)
+            if ($file != "." && $file != "..") rrmdir("$dir/$file");
+        rmdir($dir);
+    } else if (file_exists($dir)) unlink($dir);
+}
+
+function rcopy($src, $dst)
+{
+    if (file_exists($dst))
+        rrmdir($dst);
+    if (is_dir($src)) {
+        mkdir($dst);
+        $files = scandir($src);
+        foreach ($files as $file)
+            if ($file != "." && $file != "..")
+                rcopy("$src/$file", "$dst/$file");
+    } else if (file_exists($src))
+        copy($src, $dst);
 }
 
 function file_size($byte)
