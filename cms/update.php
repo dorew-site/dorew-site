@@ -70,19 +70,15 @@ if (is_login()) {
             $dir_source = $root . '/dorew-site-main';
             foreach ($arr_dir as $new_dir) {
                 $new_dir_path = $dir_source . '/' . $new_dir;
-                if (is_dir($new_dir_path)) {
-                    rcopy($new_dir_path, $root . '/' . $new_dir);
-                }
+                rcopy($new_dir_path, $root . '/' . $new_dir);
             }
             foreach ($arr_file as $new_file) {
                 $new_file_path = $dir_source . '/' . $new_file;
-                if (is_file($new_file_path)) {
-                    rcopy($new_file_path, $root . '/' . $new_file);
-                }
+                rcopy($new_file_path, $root . '/' . $new_file);
             }
             // remove dorew-site-main and dorew-site.zip
             remove_dir($dir_source);
-            //unlink($file_new_version);
+            unlink($file_new_version);
             $rmd = ['version.txt', 'README.md'];
             foreach ($rmd as $rm) {
                 $rm_path = $root . '/' . $rm;

@@ -16,6 +16,7 @@ $http_host = $_SERVER['HTTP_HOST'];
 $request_uri = $_SERVER['REQUEST_URI'];
 
 $current_version = '0.2.0-RC2';
+$notify_update_version = 'display';
 
 //database config
 $url_phpmyadmin = 'http://localhost:8080/phpmyadmin';
