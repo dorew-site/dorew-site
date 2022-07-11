@@ -125,8 +125,9 @@ if (!$db) {
         $display_type = ['CSS', 'Javascript'];
         $icon_type = ['<i class="fa fa-file-text-o" aria-hidden="true"></i>', '<i class="fa fa-code" aria-hidden="true"></i>'];
         if ($_GET['act'] == 'logout') {
-            setcookie($account_admin, '', 0);
+            setcookie($account_admin, '', 0, '/');
             header('Location: /cms');
+            exit();
         }
         if ($notify_update_version == 'display') {
             include $root . '/cms/layout/act/version.php';
@@ -256,8 +257,9 @@ if (!$db) {
             if ($user == $account_admin && $pass == $password_admin) {
                 $div = 'gmenu';
                 $result = 'Đăng nhập thành công';
-                setcookie($account_admin, $new_password, time() + 31536000);
+                setcookie($account_admin, $new_password, time() + 31536000, '/');
                 header('Location: /cms');
+                exit();
             } else {
                 $div = 'rmenu';
                 $result = 'Thông tin đăng nhập sai cmnr!';
