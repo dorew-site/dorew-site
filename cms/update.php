@@ -102,7 +102,8 @@ if (is_login()) {
             'pass' => $db_new_info[2],
             'name' => $db_new_info[3]
         );
-        $old_db_info = file_get_contents($root . '/cms/core.php');
+        $old_config = file_get_contents($root . '/cms/core.php');
+        require_once $root . '/cms/core.php';
         $new_config = str_replace('$db_host = \'' . $db_host . '\';', '$db_host = \'' . $new_db['host'] . '\';', $old_config);
         $new_config = str_replace('$db_user = \'' . $db_user . '\';', '$db_user = \'' . $new_db['user'] . '\';', $new_config);
         $new_config = str_replace('$db_pass = \'' . $db_pass . '\';', '$db_pass = \'' . $new_db['pass'] . '\';', $new_config);
