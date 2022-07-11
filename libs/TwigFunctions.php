@@ -25,9 +25,6 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
             header('Location: /cms');
             exit();
         }
-        if (!empty($this->conn)) {
-            mysqli_set_charset($this->conn, 'UTF8');
-        }
     }
 
     public function getFunctions()
