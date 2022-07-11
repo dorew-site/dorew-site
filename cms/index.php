@@ -135,7 +135,7 @@ if (!$db) {
         include $root . '/cms/layout/act/manager.php';
         if (!in_array($type, $list_type)) {
             echo '
-            <div class="phdr"><i class="fa fa-list" aria-hidden="true"></i> <b>Danh sách</b> | <a href="/cms/use.php" title="Tài liệu tham khảo">Functions</a></div>
+            <div class="phdr"><i class="fa fa-list" aria-hidden="true"></i> <b>Danh sách</b> | <a href="https://github.com/dorew-site/dorew-site/wiki" title="Tài liệu tham khảo">Functions</a></div>
             <div class="topmenu" style="padding:8px"><b>Tài nguyên</b></div>
             <a href="?type=css"><div class="list1"><i class="fa fa-folder-open-o" aria-hidden="true"></i> CSS</div></a>
             <a href="?type=js"><div class="list1"><i class="fa fa-folder-open-o" aria-hidden="true"></i> Javascript</div></a>

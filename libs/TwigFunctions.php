@@ -25,6 +25,9 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
             header('Location: /cms');
             exit();
         }
+        if (!empty($this->conn)) {
+            mysqli_set_charset($this->conn, 'UTF8');
+        }
     }
 
     public function getFunctions()
@@ -33,6 +36,7 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
             new \Twig\TwigFunction('create_table', [$this, 'create_table']),
             new \Twig\TwigFunction('create_table_with_column', [$this, 'create_table_with_column']),
             new \Twig\TwigFunction('drop_table', [$this, 'drop_table']),
+            new \Twig\TwigFunction('rename_table', [$this, 'rename_table']),
             new \Twig\TwigFunction('get_table_count', [$this, 'get_table_count']),
 
             new \Twig\TwigFunction('create_column_table', [$this, 'create_column_table']),
@@ -135,7 +139,7 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
                         $sql .= "`$key` $value, ";
                     }
                 }
-                $sql .= "PRIMARY KEY (`id`)
+                $sql .= "UNIQUE KEY (`id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
                 mysqli_query($this->conn, $sql);
                 return 'Table `' . $table_name . '` created with your columns';

@@ -39,6 +39,7 @@ if (!$db || !is_login()) {
         //notification
         echo '<div class="gmenu">Cài đặt thành công!</div>';
         header('Refresh: 3; url=/cms/setting.php');
+        exit();
     }
     if ($notify_update_version == 'display') {
         $checked_notify_version = ' checked';

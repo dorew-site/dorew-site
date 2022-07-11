@@ -21,6 +21,7 @@ if (is_login()) {
         remove_dir($dir_tpl);
         mkdir($dir_tpl);
         header('Location: /cms/manager');
+        exit();
     }
     echo '
     <div class="phdr"><a href="/cms" title="Quản lý tập tin"><i class="fa fa-tachometer" aria-hidden="true"></i> Quản lý tập tin</a> | <b>Dọn dẹp</b></div>
@@ -34,5 +35,6 @@ if (is_login()) {
     ';
 } else {
     header('Location: /cms');
+    exit();
 }
 include $root . '/cms/layout/footer.php';

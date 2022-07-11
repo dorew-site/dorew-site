@@ -21,6 +21,7 @@ if (is_login()) {
     if (strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
         file_put_contents($dir_tpl . '/' . $filename, 'Xin chào, đây là một tập tin mới');
         header('Location: /cms/manager/edit.php?file=' . $filename);
+        exit();
     }
     echo '
     <div class="phdr"><a href="/cms" title="Quản lý tập tin"><i class="fa fa-tachometer" aria-hidden="true"></i> Quản lý tập tin</a> | <b>Tạo mới</b></div>
@@ -34,5 +35,6 @@ if (is_login()) {
     ';
 } else {
     header('Location: /cms');
+    exit();
 }
 include $root . '/cms/layout/footer.php';

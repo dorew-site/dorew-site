@@ -84,6 +84,7 @@ if (is_login()) {
                 unlink($dir_backup . '/' . $filename);
                 header('location: /cms/manager/backup.php');
             }
+            exit();
         } else {
             if (in_array($act, ['use', 'del'])) {
                 echo '<div class="rmenu">Tập tin <b>' . $filename . '</b> không tồn tại</div>';
@@ -180,5 +181,6 @@ if (is_login()) {
     }
 } else {
     header('Location: /cms');
+    exit();
 }
 include $root . '/cms/layout/footer.php';

@@ -175,5 +175,6 @@ if (is_login()) {
     }
 } else {
     header('Location: /cms');
+    exit();
 }
 include $root . '/cms/layout/footer.php';

@@ -64,6 +64,7 @@ if (is_login()) {
             if (strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
                 unlink($url_file);
                 header('Location: /cms/manager');
+                exit();
             }
             echo '
             <div class="menu" style="text-align:center">
@@ -83,6 +84,7 @@ if (is_login()) {
             if (strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
                 file_put_contents($url_file, $new_code);
                 header('Location: ' . $request_uri);
+                exit();
             }
             //form edit
             echo '
@@ -103,5 +105,6 @@ if (is_login()) {
     }
 } else {
     header('Location: /cms');
+    exit();
 }
 include $root . '/cms/layout/footer.php';
