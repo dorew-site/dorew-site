@@ -96,6 +96,12 @@ if (is_login()) {
         /* UPDATE DB */
         $db_new_info = file_get_contents($root_backup . '/core.txt');
         $db_new_info = explode('|', $db_new_info);
+        $old_db = array(
+            'host' => 'localhost',
+            'user' => 'root',
+            'pass' => '',
+            'name' => 'dorewsite'
+        );
         $new_db = array(
             'host' => $db_new_info[0],
             'user' => $db_new_info[1],
@@ -103,16 +109,15 @@ if (is_login()) {
             'name' => $db_new_info[3]
         );
         $old_config = file_get_contents($root . '/cms/core.php');
-        require_once $root . '/cms/core.php';
-        $new_config = str_replace('$db_host = \'' . $db_host . '\';', '$db_host = \'' . $new_db['host'] . '\';', $old_config);
-        $new_config = str_replace('$db_user = \'' . $db_user . '\';', '$db_user = \'' . $new_db['user'] . '\';', $new_config);
-        $new_config = str_replace('$db_pass = \'' . $db_pass . '\';', '$db_pass = \'' . $new_db['pass'] . '\';', $new_config);
-        $new_config = str_replace('$db_name = \'' . $db_name . '\';', '$db_name = \'' . $new_db['name'] . '\';', $new_config);
+        $new_config = str_replace('$db_host = \'' . $old_db['host'] . '\';', '$db_host = \'' . $new_db['host'] . '\';', $old_config);
+        $new_config = str_replace('$db_user = \'' . $old_db['user'] . '\';', '$db_user = \'' . $new_db['user'] . '\';', $new_config);
+        $new_config = str_replace('$db_pass = \'' . $old_db['pass'] . '\';', '$db_pass = \'' . $new_db['pass'] . '\';', $new_config);
+        $new_config = str_replace('$db_name = \'' . $old_db['name'] . '\';', '$db_name = \'' . $new_db['name'] . '\';', $new_config);
         file_put_contents($root . '/cms/core.php', $new_config);
         unlink($root_backup . '/core.txt');
 
         /* GO TO CMS */
-        header('Location: /cms');
+        header('Refresh: 0; url=/cms');
         exit();
     }
 
