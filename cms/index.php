@@ -127,7 +127,6 @@ if (!$db) {
         if ($_GET['act'] == 'logout') {
             setcookie($account_admin, '', 0, '/');
             header('Location: /cms');
-            exit();
         }
         if ($notify_update_version == 'display') {
             include $root . '/cms/layout/act/version.php';
