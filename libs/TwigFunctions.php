@@ -314,7 +314,7 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         if (!$table_name || !$column_name || !$column_value) {
             return 'There is not table_name or column_name or column_value in delete_row_table()';
         } else {
-            if (!$this->db->table_exists($table_name)) {
+            if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "DELETE FROM $table_name WHERE $column_name = $column_value";
