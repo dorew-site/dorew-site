@@ -35,6 +35,7 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
             new \Twig\TwigFunction('drop_table', [$this, 'drop_table']),
             new \Twig\TwigFunction('rename_table', [$this, 'rename_table']),
             new \Twig\TwigFunction('get_table_count', [$this, 'get_table_count']),
+            new \Twig\TwigFunction('get_row_count', [$this, 'get_row_count']),
 
             new \Twig\TwigFunction('create_column_table', [$this, 'create_column_table']),
             new \Twig\TwigFunction('drop_column_table', [$this, 'drop_column_table']),
@@ -45,9 +46,12 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
             new \Twig\TwigFunction('update_row_array_table', [$this, 'update_row_array_table']),
             new \Twig\TwigFunction('delete_row_table', [$this, 'delete_row_table']),
 
+            new \Twig\TwigFunction('select_table', [$this, 'select_table']),
+            new \Twig\TwigFunction('select_table_offset', [$this, 'select_table_offset']),
             new \Twig\TwigFunction('select_table_data', [$this, 'select_table_data']),
             new \Twig\TwigFunction('select_table_row_data', [$this, 'select_table_row_data']),
             new \Twig\TwigFunction('select_table_where_data', [$this, 'select_table_where_data']),
+            new \Twig\TwigFunction('search_key_in_table', [$this, 'search_key_in_table']),
 
             new \Twig\TwigFunction('cancel_xss', [$this, 'cancel_xss']),
             new \Twig\TwigFunction('is_login', [$this, 'is_login']),
@@ -87,15 +91,13 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         return false;
     }
 
-    function query($sql)
+    function query($sql = null)
     {
         if (empty($sql)) {
-            $this->error('Invalid query string');
             return false;
         }
         $result = $this->db->query($sql);
         if (!$result || $result === false) {
-            $this->error('Query failed');
             return false;
         }
         if ($result !== true) {
@@ -146,7 +148,7 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         }
     }
 
-    function create_table($table_name)
+    function create_table($table_name = null)
     {
         if (!$table_name) {
             return 'There is not table_name in create_table()';
@@ -199,6 +201,45 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "SELECT COUNT(*) FROM `$table_name`";
+                $result = mysqli_query($this->conn, $sql);
+                $row = mysqli_fetch_row($result);
+                return $row[0] ? $row[0] : 0;
+            }
+        }
+    }
+
+    function get_row_count($table_name = null, $where = null)
+    {
+        if (!$table_name) {
+            return 'There is not table_name in get_column_count()';
+        } else {
+            if (!$this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` does not exist';
+            } else {
+                $sql = "SELECT COUNT(*) FROM `$table_name`";
+                $sql_operator = ['>=', '<=', '>', '<', '='];
+                if ($where) {
+                    //where: {'column': 'value', 'column2': 'value2','operator': '>='}
+                    $operator = $where['operator'] ? $where['operator'] : '=';
+                    if (!in_array($operator, $sql_operator)) {
+                        $operator = '=';
+                    }
+                    $sql .= " WHERE ";
+                    $where_new = [];
+                    foreach ($where as $key => $value) {
+                        if ($key !== 'operator') {
+                            $where_new[$key] = $value;
+                        }
+                    }
+                    foreach ($where_new as $key => $value) {
+                        $sql .= "`$key` " . $operator ." '$value'";
+                        //thêm AND nếu còn thêm điều kiện
+                        if (next($where_new)) {
+                            $sql .= " AND ";
+                        }
+                        //return $sql;
+                    }
+                }
                 $result = mysqli_query($this->conn, $sql);
                 $row = mysqli_fetch_row($result);
                 return $row[0] ? $row[0] : 0;
@@ -297,8 +338,8 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
 
     function update_row_table($table_name = null, $column_name = null, $column_value = null, $where_column_name = null, $where_column_value = null)
     {
-        if (!$table_name || !$column_name || !$column_value || !$where_column_name || !$where_column_value) {
-            return 'There is not table_name or column_name or column_value or where_column_name or where_column_value in update_row_table()';
+        if (!$table_name || !$column_name || !$where_column_name || !$where_column_value) {
+            return 'There is not table_name or column_name or where_column_name or where_column_value in update_row_table()';
         } else {
             if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
@@ -325,6 +366,154 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
     }
 
     /* --- COLUMN AND ROW --- */
+    
+    function select_table($table_name = null, $column = null, $where = null, $order = null, $sort = null, $limit = null, $count = null)
+    {
+        if (!$table_name) {
+            return 'There is not table_name in select_table()';
+        } else {
+            if (!$this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` does not exist';
+            } else {
+                $sql = "SELECT ";
+                if ($column) {
+                    $sql .= $column;
+                } else {
+                    $sql .= "*";
+                }
+                $sql .= " FROM $table_name";
+                if ($where) {
+                    // where = {'column1': 'value1', 'column2': 'value2'}
+                    if (is_array($where)) {
+                        $sql .= " WHERE ";
+                        foreach ($where as $key => $value) {
+                            $sql .= "$key = '$value' AND ";
+                        }
+                        $sql = substr($sql, 0, -4);
+                    } else {
+                        return 'An error occurred in the function select_table(): `where` referenced is not an array.';
+                        exit;
+                    }
+                }
+                if (!$order) $order = 'id';
+                if (!$sort) $sort = 'asc';
+                $sql .= " ORDER BY $order $sort";
+                if ($limit) {
+                    $error_limit = 'An error occurred in the function select_table(): `limit` referenced must be a numberic, or an array containing 2 elements `start` and `end`.';
+                    if (is_array($limit)) {
+                        // limit = {'start':1,'end':10}
+                        if (count($limit) == 2) {
+                            if (is_numeric($limit['start']) && is_numeric($limit['end'])) {
+                                $sql .= " LIMIT " . $limit['start'] . "," . $limit['end'];
+                            } else {
+                                return $error_limit;
+                                exit;
+                            }
+                        } else {
+                            return $error_limit;
+                            exit;
+                        }
+                    } else {
+                        if (is_numeric($limit)) {
+                            $sql .= " LIMIT " . $limit;
+                        } else {
+                            return $error_limit;
+                            exit;
+                        }
+                    }
+                }
+                //return $sql;
+                $query = mysqli_query($this->conn, $sql);
+                $rows = [];
+                while ($row = mysqli_fetch_assoc($query)) {
+                    $rows[] = $row;
+                }
+                if ($count == 'count') {
+                    return count($rows) ? count($rows) : 0;
+                } else {
+                    return $rows;
+                }
+            }
+        }
+    }
+    
+    function select_table_offset($table_name = null, $column = null, $where = null, $order = null, $sort = null, $limit = null, $offset = null, $count = null)
+    {
+        if (!$table_name) {
+            return 'There is not table_name in select_table_offset()';
+        } else {
+            if (!$this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` does not exist';
+            } else {
+                $sql = "SELECT ";
+                if ($column) {
+                    $sql .= $column;
+                } else {
+                    $sql .= "*";
+                }
+                $sql .= " FROM $table_name";
+                if ($where) {
+                    // where = {'column1': 'value1', 'column2': 'value2'}
+                    if (is_array($where)) {
+                        $sql .= " WHERE ";
+                        foreach ($where as $key => $value) {
+                            $sql .= "$key = '$value' AND ";
+                        }
+                        $sql = substr($sql, 0, -4);
+                    } else {
+                        return 'An error occurred in the function select_table_offset(): `where` referenced is not an array.';
+                        exit;
+                    }
+                }
+                if (!$order) $order = 'id';
+                if (!$sort) $sort = 'asc';
+                $sql .= " ORDER BY $order $sort";
+                if ($offset) {
+                    $error_offset = 'An error occurred in the function select_table_offset(): `offset` referenced must be a numberic.';
+                    if (is_numeric($offset)) {
+                        $sql .= " OFFSET " . $offset;
+                    } else {
+                        return $error_offset;
+                        exit;
+                    }
+                }
+                if ($limit) {
+                    $error_limit = 'An error occurred in the function select_table_offset(): `limit` referenced must be a numberic, or an array containing 2 elements `start` and `end`.';
+                    if (is_array($limit)) {
+                        // limit = {'start':1,'end':10}
+                        if (count($limit) == 2) {
+                            if (is_numeric($limit['start']) && is_numeric($limit['end'])) {
+                                $sql .= " LIMIT " . $limit['start'] . "," . $limit['end'];
+                            } else {
+                                return $error_limit;
+                                exit;
+                            }
+                        } else {
+                            return $error_limit;
+                            exit;
+                        }
+                    } else {
+                        if (is_numeric($limit)) {
+                            $sql .= " LIMIT " . $limit;
+                        } else {
+                            return $error_limit;
+                            exit;
+                        }
+                    }
+                }
+                $query = mysqli_query($this->conn, $sql);
+                $rows = [];
+                while ($row = mysqli_fetch_assoc($query)) {
+                    $rows[] = $row;
+                }
+                if ($count == 'count') {
+                    return count($rows) ? count($rows) : 0;
+                } else {
+                    return $rows;
+                }
+            }
+        }
+    }
 
     function select_table_row_data($table_name =  null, $column_name = null, $column_value = null)
     {
@@ -363,7 +552,7 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         }
     }
 
-    function select_table_where_data($table_name, $where_column_name, $where_column_value, $order = null, $sort = null)
+    function select_table_where_data($table_name = null, $where_column_name = null, $where_column_value = null, $order = null, $sort = null)
     {
         if (!$order) $order = 'id';
         if (!$sort) $sort = 'ASC';
@@ -381,6 +570,38 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
                 }
                 $total = ['total' => $rows ? count($rows) : 0];
                 return array_merge($total, $rows);
+            }
+        }
+    }
+
+    function search_key_in_table($table_name = null, $column = null, $string = null, $random = null)
+    {
+        if (!$table_name || !$column || !$string) {
+            return 'There is not table_name or column or string (or keyword) in search_key_in_table()';
+        } else {
+            if (!$this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` does not exist';
+            } else {
+                $array = explode(' ', $string);
+                $array = array_unique($array);
+                $count = count($array);
+                if ($count > 1) {
+                    foreach ($array as $key => $value) {
+                        $array[$key] = '%' . $value . '%';
+                    }
+                    $sql = "SELECT * FROM `$table_name` WHERE `$column` LIKE '" . implode("' OR `title` LIKE '", $array) . "'";
+                } else {
+                    $sql = "SELECT * FROM `$table_name` WHERE `$column` LIKE '%" . $string . "%'";
+                }
+                if (is_numeric($random)) {
+                    $sql .= " ORDER BY RAND() LIMIT $random";
+                }
+                $query = mysqli_query($this->conn, $sql);
+                $rows = [];
+                while ($row = mysqli_fetch_assoc($query)) {
+                    $rows[] = $row;
+                }
+                return $rows;
             }
         }
     }
@@ -423,7 +644,7 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         $text = preg_replace("/\[color=(.*?)\](.*?)\[\/color\]/is", "<span style=\"color:$1\">$2</span>", $text);
         $text = preg_replace("/\[size=(.*?)\](.*?)\[\/size\]/is", "<span style=\"font-size:$1\">$2</span>", $text);
         $text = preg_replace("/\[quote\](.*?)\[\/quote\]/is", "<blockquote>$1</blockquote>", $text);
-        $text = preg_replace('/\[code\](.*?)\[\/code\]/is', '<divCode><i class="fa fa-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle"></i></divCode><pre><code contenteditable="true">$1</code></pre>', $text);
+        $text = preg_replace('/\[code\](.*?)\[\/code\]/is', '<div class="codeBlock"><divCode><i class="fa fa-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle"></i></divCode><pre><code contenteditable="true">$1</code></pre></div>', $text);
         return $text;
     }
 
