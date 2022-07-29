@@ -48,29 +48,43 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
 
             new \Twig\TwigFunction('select_table', [$this, 'select_table']),
             new \Twig\TwigFunction('select_table_offset', [$this, 'select_table_offset']),
+
             new \Twig\TwigFunction('select_table_data', [$this, 'select_table_data']),
             new \Twig\TwigFunction('select_table_row_data', [$this, 'select_table_row_data']),
             new \Twig\TwigFunction('select_table_where_data', [$this, 'select_table_where_data']),
             new \Twig\TwigFunction('search_key_in_table', [$this, 'search_key_in_table']),
+            new \Twig\TwigFunction('select_table_limit_offset', [$this, 'select_table_limit_offset']),
+            new \Twig\TwigFunction('select_table_where_data_limit_offset', [$this, 'select_table_where_data_limit_offset']),
 
-            new \Twig\TwigFunction('cancel_xss', [$this, 'cancel_xss']),
-            new \Twig\TwigFunction('is_login', [$this, 'is_login']),
-            new \Twig\TwigFunction('bb_default', [$this, 'bb_default']),
-            new \Twig\TwigFunction('rwurl', [$this, 'rwurl']),
-            new \Twig\TwigFunction('request_method', [$this, 'request_method']),
-            new \Twig\TwigFunction('ip', [$this, 'ip']),
-            new \Twig\TwigFunction('debug', [$this, 'debug']),
-            new \Twig\TwigFunction('get_uri_segments', [$this, 'get_uri_segments']),
-            new \Twig\TwigFunction('redirect', [$this, 'redirect']),
-            new \Twig\TwigFunction('get_post', [$this, 'get_post']),
-            new \Twig\TwigFunction('get_get', [$this, 'get_get']),
-            new \Twig\TwigFunction('user_agent', [$this, 'user_agent']),
+            new \Twig\TwigFunction('query_select_tabel', [$this, 'query_select_tabel']),
+            new \Twig\TwigFunction('query_update_tabel', [$this, 'query_update_tabel']),
+
             new \Twig\TwigFunction('set_cookie', [$this, 'set_cookie']),
             new \Twig\TwigFunction('delete_cookie', [$this, 'delete_cookie']),
             new \Twig\TwigFunction('get_cookie', [$this, 'get_cookie']),
+            new \Twig\TwigFunction('is_login', [$this, 'is_login']),
+
+            new \Twig\TwigFunction('get_uri_segments', [$this, 'get_uri_segments']),
+            new \Twig\TwigFunction('request_method', [$this, 'request_method']),
+            new \Twig\TwigFunction('get_post', [$this, 'get_post']),
+            new \Twig\TwigFunction('get_get', [$this, 'get_get']),
+
+            new \Twig\TwigFunction('cancel_xss', [$this, 'cancel_xss']),
+            new \Twig\TwigFunction('rwurl', [$this, 'rwurl']),
+            new \Twig\TwigFunction('get_youtube_id', [$this, 'get_youtube_id']),
+
+            new \Twig\TwigFunction('encrypt', [$this, 'encrypt']),
+            new \Twig\TwigFunction('debug', [$this, 'debug']),
+            new \Twig\TwigFunction('print_r', [$this, 'debug']),
+            new \Twig\TwigFunction('redirect', [$this, 'redirect']),
             new \Twig\TwigFunction('json_decode', [$this, 'json_decode_']),
             new \Twig\TwigFunction('html_decode', [$this, 'html_decode']),
             new \Twig\TwigFunction('current_url', [$this, 'current_url']),
+            new \Twig\TwigFunction('shuffle_array', [$this, 'shuffle_array']),
+
+            new \Twig\TwigFunction('ip', [$this, 'ip']),
+            new \Twig\TwigFunction('user_agent', [$this, 'user_agent']),
+
         ];
     }
 
@@ -232,7 +246,7 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
                         }
                     }
                     foreach ($where_new as $key => $value) {
-                        $sql .= "`$key` " . $operator ." '$value'";
+                        $sql .= "`$key` " . $operator . " '$value'";
                         //thêm AND nếu còn thêm điều kiện
                         if (next($where_new)) {
                             $sql .= " AND ";
@@ -366,7 +380,7 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
     }
 
     /* --- COLUMN AND ROW --- */
-    
+
     function select_table($table_name = null, $column = null, $where = null, $order = null, $sort = null, $limit = null, $count = null)
     {
         if (!$table_name) {
@@ -436,7 +450,7 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
             }
         }
     }
-    
+
     function select_table_offset($table_name = null, $column = null, $where = null, $order = null, $sort = null, $limit = null, $offset = null, $count = null)
     {
         if (!$table_name) {
@@ -511,6 +525,49 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
                 } else {
                     return $rows;
                 }
+            }
+        }
+    }
+
+
+    function select_table_limit_offset($table_name = null,  $limit, $offset, $order = null, $sort = null)
+    {
+        if (!$order) $order = 'id';
+        if (!$sort) $sort = 'ASC';
+        if (!$table_name) {
+            return 'There is not table_name in select_table_data()';
+        } else {
+            if (!$this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` does not exist';
+            } else {
+                $sql = "SELECT * FROM $table_name ORDER BY $order $sort LIMIT $limit OFFSET $offset";
+                $query = mysqli_query($this->conn, $sql);
+                $rows = [];
+                while ($row = mysqli_fetch_assoc($query)) {
+                    $rows[] = $row;
+                }
+                return $rows;
+            }
+        }
+    }
+
+    function select_table_where_data_limit_offset($table_name = null, $where_column_name, $where_column_value, $limit, $offset, $order = null, $sort = null)
+    {
+        if (!$order) $order = 'id';
+        if (!$sort) $sort = 'ASC';
+        if (!$table_name) {
+            return 'There is not table_name in select_table_data()';
+        } else {
+            if (!$this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` does not exist';
+            } else {
+                $sql = "SELECT * FROM $table_name WHERE $where_column_name = $where_column_value ORDER BY $order $sort LIMIT $limit OFFSET $offset";
+                $query = mysqli_query($this->conn, $sql);
+                $rows = [];
+                while ($row = mysqli_fetch_assoc($query)) {
+                    $rows[] = $row;
+                }
+                return $rows;
             }
         }
     }
@@ -606,19 +663,81 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         }
     }
 
+    /* --- GENERAL QUERIES --- */
+
+    function query_select_table($table_name = null, $sql = null)
+    {
+        if (!$table_name) {
+            return 'There is not table_name in query_select_table()';
+        } else {
+            if (!$this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` does not exist';
+            } else {
+                if (preg_match('/^SELECT/', $sql) || preg_match('/^select/', $sql)) {
+                    $query = mysqli_query($this->conn, $sql);
+                    $rows = [];
+                    while ($row = mysqli_fetch_assoc($query)) {
+                        $rows[] = $row;
+                    }
+                    return $rows;
+                } else {
+                    return 'There is not sql in query_select_table()';
+                }
+            }
+        }
+    }
+
+    function query_update_table($table_name = null, $array_row = null, $other_sql = null)
+    {
+        if (!$table_name) {
+            return 'There is not table_name in query_update_table()';
+        } else {
+            if (!$this->table_exists($table_name)) {
+                return 'Table `' . $table_name . '` does not exist';
+            } else {
+                if (is_array($array_row)) {
+                    $sql = "UPDATE $table_name SET ";
+                    foreach ($array_row as $key => $value) {
+                        $sql .= "`$key` = '$value',";
+                    }
+                    $sql = rtrim($sql, ',');
+                    if ($other_sql) {
+                        $sql .= " $other_sql";
+                    }
+                    mysqli_query($this->conn, $sql);
+                    return 'Rows in table `' . $table_name . '` updated';
+                } else {
+                    return 'There is not array_row in query_update_table()';
+                }
+            }
+        }
+    }
+
     /*
     -----------------------------------------------------------------
     Additional Functions for TWIG
     -----------------------------------------------------------------
     */
 
-    function cancel_xss($string)
+    /* MANIPULATION OF COOKIE */
+
+    function set_cookie($name, $value)
     {
-        $string = preg_replace('/\\\\/', '\\', $string);
-        $string = str_replace('\&quot;', '&quot;', $string);
-        $string = str_replace('\"', '&quot;', $string);
-        $string = str_replace("\'", '&#039;', $string);
-        return $string;
+        setcookie($name, $value, time() + 3600 * 24 * 365, '/');
+        return;
+    }
+
+    function delete_cookie($name)
+    {
+        setcookie($name, '', time() - 3600 * 24 * 365, '/');
+        unset($_COOKIE[$name]);
+        return;
+    }
+
+    function get_cookie($name)
+    {
+        if (!$_COOKIE[$name]) return false;
+        return $_COOKIE[$name];
     }
 
     function is_login()
@@ -634,28 +753,67 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         }
     }
 
-    function bb_default($text)
-    {
-        //$text = htmlspecialchars($text);
-        //$text = nl2br($text);
-        $text = preg_replace("/\[b\](.*?)\[\/b\]/is", "<strong>$1</strong>", $text);
-        $text = preg_replace("/\[i\](.*?)\[\/i\]/is", "<em>$1</em>", $text);
-        $text = preg_replace("/\[u\](.*?)\[\/u\]/is", "<u>$1</u>", $text);
-        $text = preg_replace("/\[color=(.*?)\](.*?)\[\/color\]/is", "<span style=\"color:$1\">$2</span>", $text);
-        $text = preg_replace("/\[size=(.*?)\](.*?)\[\/size\]/is", "<span style=\"font-size:$1\">$2</span>", $text);
-        $text = preg_replace("/\[quote\](.*?)\[\/quote\]/is", "<blockquote>$1</blockquote>", $text);
-        $text = preg_replace('/\[code\](.*?)\[\/code\]/is', '<div class="codeBlock"><divCode><i class="fa fa-circle"></i><i class="fa fa-circle"></i><i class="fa fa-circle"></i></divCode><pre><code contenteditable="true">$1</code></pre></div>', $text);
-        return $text;
-    }
+    /* FORM HANDLING METHODS */
 
     function request_method()
     {
         return $_SERVER['REQUEST_METHOD'];
     }
 
+    function get_post($string)
+    {
+        return htmlspecialchars(addslashes($_POST[$string]));
+    }
+
+    function get_get($string)
+    {
+        return htmlspecialchars(addslashes($_GET[$string]));
+    }
+
+    /* ENCRYPT */
+
+    function encrypt($string = null, $type = null)
+    {
+        // type = md5, sha1
+        if (!$string || !$type) {
+            return 'There is not string or type in encrypt()';
+        } else {
+            $type = strtolower($type);
+            switch ($type) {
+                case 'md5':
+                    return md5($string);
+                    break;
+                case 'sha1':
+                    return sha1($string);
+                    break;
+                default:
+                    return 'An error occurred in function encrypt(): `type` referenced must be `md5` or `sha1`';
+                    break;
+            }
+        }
+    }
+
+    /* SOME OTHER FUNCTIONS */
+
+    function cancel_xss($string)
+    {
+        $string = preg_replace('/\\\\/', '\\', $string);
+        $string = str_replace('\&quot;', '&quot;', $string);
+        $string = str_replace('\"', '&quot;', $string);
+        $string = str_replace("\'", '&#039;', $string);
+        return $string;
+    }
+
     function ip()
     {
-        return $_SERVER['REMOTE_ADDR'];
+        $ip = $_SERVER['REMOTE_ADDR'];
+        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        }
+        if (isset($_SERVER['HTTP_CLIENT_IP'])) {
+            $ip = $_SERVER['HTTP_CLIENT_IP'];
+        }
+        return $ip;
     }
 
     function debug($var)
@@ -675,38 +833,9 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         return header('Location: ' . $url);
     }
 
-    function get_post($string)
-    {
-        return htmlspecialchars(addslashes($_POST[$string]));
-    }
-
-    function get_get($string)
-    {
-        return htmlspecialchars(addslashes($_GET[$string]));
-    }
-
     function user_agent()
     {
         return $_SERVER['HTTP_USER_AGENT'];
-    }
-
-    function set_cookie($name, $value)
-    {
-        setcookie($name, $value, time() + 3600 * 24 * 365, '/');
-        return;
-    }
-
-    function delete_cookie($name)
-    {
-        setcookie($name, '', time() - 3600 * 24 * 365, '/');
-        unset($_COOKIE[$name]);
-        return;
-    }
-
-    function get_cookie($name)
-    {
-        if (!$_COOKIE[$name]) return false;
-        return $_COOKIE[$name];
     }
 
     function json_decode_($string)
@@ -752,5 +881,17 @@ class TwigFunctions extends \Twig\Extension\AbstractExtension
         $string = preg_replace("/[\s-]/", "-", $string);
         $string = mb_strtolower($string, 'utf8');
         return $string;
+    }
+
+    function shuffle_array($array)
+    {
+        shuffle($array);
+        return $array;
+    }
+
+    function get_youtube_id($url)
+    {
+        preg_match("/^(?:http(?:s)?:\/\/)?(?:www\.)?(?:m\.)?(?:youtu\.be\/|youtube\.com\/(?:(?:watch)?\?(?:.*&)?v(?:i)?=|(?:embed|v|vi|user|shorts)\/))([^\?&\"'>]+)/", $url, $matches);
+        return $matches[1];
     }
 }
