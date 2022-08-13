@@ -12,7 +12,7 @@
 
 defined('_DOREW') or die('Access denied');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/core.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/config.php';
 
 $get_latest_version = file_get_contents('https://dorew-site.github.io/dorew-site/version.txt');
 $latest_version = $get_latest_version ? $get_latest_version : $current_version;
@@ -40,7 +40,7 @@ function update_note($array_ver, $array_note)
         $versionL = $array_ver['latest_version'] . '-' . $array_note['latest_version_note'];
     }
     $icon_update = '<i class="fa fa-download" aria-hidden="true"></i>';
-    $notice_update = '- Có phiên bản mới (<b>' . $versionL . '</b>). <a href="/cms/update.php">' . $icon_update . ' Cập nhật bản vá</a>.<br/>- <b>Phiên bản hiện tại:</b> ' . $versionC;
+    $notice_update = '- Có phiên bản mới (<b>' . $versionL . '</b>). <a href="https://github.com/dorew-site/dorew-site">' . $icon_update . ' Tham khảo thêm</a>.<br/>- <b>Phiên bản hiện tại:</b> ' . $versionC;
     return $notice_update;
 }
 
@@ -62,7 +62,7 @@ $update_note_content = update_note(
 );
 $update_note_content = '<div class="phdr"><i class="fa fa-newspaper-o" aria-hidden="true"></i> <b>Tin tức</b></div>
 <div class="menu">' . $update_note_content . '</div>
-<div class="menu">- Nếu bạn cảm thấy phiền khi thấy các thông báo này, bạn có thể tắt chúng trong mục <b>Cài đặt</b>.</div>';
+<div class="menu">- Nếu bạn cảm thấy phiền khi thấy thông báo này, bạn có thể tắt chúng trong mục <b>Cài đặt</b>.</div>';
 
 if (empty($act_update)) {
     if (version_compare($latest_version, $current_version, '>=')) {

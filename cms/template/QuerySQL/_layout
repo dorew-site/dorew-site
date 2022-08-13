@@ -1,0 +1,36 @@
+{% block head %}
+{% set url = get_uri_segments() %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Cache-Control" content="no-cache"/>
+    <meta http-equiv="content-language" content="vi"/>
+    <meta name="robots" content="index, follow">
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="theme-color" content="#fff"/>
+    <link rel="shortcut icon" href="https://i.imgur.com/2pfDfoN.png" />
+    <link rel="stylesheet" href="/main.css?t={{'now'|date('U')}}">
+    <link rel="stylesheet" href="/w3.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <title>{{title|default('Dorew')}}</title>
+  </head>
+  <body>
+    <div class="header" style="text-align:left">
+      <a href="/"><logo>Dorew</logo></a>
+    </div>
+    <div class="w3-main maintxt">
+      <div class="w3-row">
+        <div class="phdr left">
+          <a{% if url[0] in ['',null,'index','index.php'] %} class="active"{% endif %} href="/">Video</a>
+          <a{% if url[0] == 'upload' %} class="active"{% endif %} href="/upload">Tải lên</a>
+        </div>
+{% endblock %}
+  
+{% block end %}
+      </div>
+    </div>
+    <div class="footer" style="text-align:right">Powered By DorewSite</div>
+  </body>
+</html>
+{% endblock %}

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * DorewSite Software
  * Author: Dorew
@@ -11,18 +12,64 @@
 
 defined('_DOREW') or die('Access denied');
 
-error_reporting(E_ALL & ~E_NOTICE);
-ini_set('default_charset', 'UTF-8');
-date_default_timezone_set('Asia/Ho_Chi_Minh');
+$root = $_SERVER['DOCUMENT_ROOT'];
+$http_host = $_SERVER['HTTP_HOST'];
+$request_uri = $_SERVER['REQUEST_URI'];
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/core.php';
+$current_version = '0.3.0';
+$notify_update_version = 'display';
+$code_mirror = 'on';
 
-//connect database
-$db = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+//database config
+$type_db = 'phpSQLite3';
+$config_db = [
+    'QuerySQL' => [
+        'pma' => 'http://localhost:8080/phpmyadmin/',
+        'host' => 'localhost',
+        'user' => 'root',
+        'pass' => '',
+        'db' => 'dorewsite',
+        'charset' => 'utf8mb4',
+        'collation' => 'utf8mb4_unicode_ci'
+    ],
+    'phpSQLite3' => [
+        'directory' => $root . '/cms/database/',
+        'name' => 'DorewSite',
+        'path' => 'database.sqlite'
+    ],
+];
 
-//check connection
+//admin account infomation
+$account_admin = 'admin';
+$password_admin = 'dorew';
+$passMd5 = md5(md5(md5($password_admin)) . 'dorew');
+$new_password = sha1(substr($passMd5, 0, 8));
+
+//file config
+$image_ext = ['png', 'jpg', 'jpeg', 'gif', 'ico', 'svg', 'bmp', 'tiff', 'tif', 'webp', 'psd'];
+$default_index = 'index';
+$default_404 = '_404';
+$default_login = 'dorew';
+$dir_backup = $root . '/cms/backup';
+$dir_tpl = $root . '/cms/template/' . $type_db;
+
 $uri_segments = explode('/', $request_uri);
-if (!$db && $uri_segments[1] != 'cms') {
+if (!mysqli_connect(
+    $config_db['QuerySQL']['host'],
+    $config_db['QuerySQL']['user'],
+    $config_db['QuerySQL']['pass'],
+    $config_db['QuerySQL']['db']
+) && $uri_segments[1] != 'cms') {
     header('Location: /cms');
     exit();
 }
+
+if ($type_db == 'phpSQLite3') {
+    if (!class_exists('SQLite3')) {
+        $type_db = 'QuerySQL';
+    }
+}
+
+$list_type_db = ['SQLite', 'MySQL'];
+$get_type_db = ['phpSQLite3', 'QuerySQL'];
+$current_type_db = str_replace($get_type_db, $list_type_db, $type_db);

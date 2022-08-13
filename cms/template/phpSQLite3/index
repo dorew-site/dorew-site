@@ -1,0 +1,100 @@
+{% use '_layout' %}
+
+{% from '_functions' import paging,size %}
+{% set table_name = 'youtube' %}
+{% macro nft_url(domain) %}https://{{domain}}.ipfs.nftstorage.link{% endmacro %}
+
+{% set dvideo = select_table_row_data(table_name, 'id', get_get('id')) %}
+{% if dvideo.id %}{% set title = html_decode(dvideo.title) %}{% endif %}
+
+{{block('head')}}
+{% if dvideo.id %}
+<div class="w3-twothird">
+  <div class="hdr">{{title}}</div>
+  <div class="bg">
+    {% if dvideo.type == 'youtube' %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/plyr/3.6.7/plyr.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plyr/3.6.7/plyr.min.js"></script>
+    <style>.youtubeShow{max-height: 500px;height: auto;width: auto;}</style>
+    <div id="player" data-plyr-provider="youtube" data-plyr-embed-id="{{dvideo.url}}"></div>
+    <script>const player = new Plyr('#player');</script>
+    {% else %}
+    <div id="dplayer"></div>
+    <script src="https://cdn.statically.io/gh/kn007/DPlayer-Lite/00dab19fc8021bdb072034c0415184a638a3e3b2/dist/DPlayer.min.js"></script>
+    <script>
+      const dp = new DPlayer({
+        container: document.getElementById('dplayer'),
+        video: {
+          url: '{{_self.nft_url(dvideo.url)}}',
+        },
+      });
+</script>
+    {% endif %}
+  </div>
+    <div class="hdr"> Chia sẻ</div>
+  {% if dvideo.type == 'youtube' %}
+  	{% set link_share = 'https://www.youtube.com/watch?v='~dvideo.url %}
+  	{% set bbcode_share = '[youtube]https://www.youtube.com/watch?v='~dvideo.url~'[/youtube]' %}
+  {% else %}
+  	{% set link_share = _self.nft_url(dvideo.url) %}
+  	{% set bbcode_share = '[vid]'~_self.nft_url(dvideo.url)~'[/vid]' %}
+  	{#{% set bbcode_share = '[url=http://'~system_info('subdomain')~'.'~system_info('domain')~'?id='~dvideo.id~']Dorew Watch: '~dvideo.title~'[/url]' %}#}
+  {% endif %}
+  <div class="bg">
+    <table style="width:100%">
+      <tr>
+        <td class="e1">Link:</td>
+        <td class="w3-left-align e2"><input type="text" value="{{link_share}}" class="form-control"/></td>
+      </tr>
+      <tr>
+        <td class="e1">BBCode:</td>
+        <td class="w3-left-align e2"><input type="text" value="{{bbcode_share}}" class="form-control"/></td>
+      </tr>
+    </table>
+  </div>
+</div>
+  <div class="w3-third">
+    {% set data = query_select_table(table_name,'*','WHERE `id` != '~dvideo.id~' ORDER BY time DESC LIMIT 12') %}
+      <div class="vList">
+        <ul style="list-style-position:outside;margin:0;padding:0;list-style-type:none" class="list-movies">
+        {% for video in data %}
+          {% if video.id %}
+          <li class="item-movie">
+            <a title="{{video.title}}" href="?id={{video.id}}"><div class="image"><div class="movie-play"><div class="movie-thumbnail" style="background-image:url('{% if video.type != 'youtube' %}https://i.imgur.com/pkt72fu.jpg{% else %}https://img.youtube.com/vi/{{video.url}}/0.jpg{% endif %}');"></div><span class="cripple"></span></div></div><div class="title-movie">{{video.title}}</div></a>
+          </li>
+          {% endif %}
+        {% endfor %}
+        </ul>
+      </div>
+  </div>
+{% else %}
+	{% do create_table_with_column(table_name, {"title":"TEXT","url":"TEXT","type":"TEXT","time":"INTEGER"}) %}
+	{% set total = get_table_count(table_name) %}
+    {% set per = '24' %}
+    {% set page_max = total//per %}
+    {% if total//per != total/per %}
+      {% set page_max = total//per+1 %}
+    {% endif %}
+	{% set p = get_get('page')|default(1) %}
+    {% if p matches '/[a-zA-z]|%/' or p < 1 %}{% set p = 1 %}{% endif %}
+    {% if p > page_max %}{% set p = page_max %}{% endif %}
+    {% set st=p*per-per %}
+    {% if total == '0' %}
+      <div class="list1">Chưa có video nào được đăng tải.</div>
+    {% else %}
+      {% set data = query_select_table(table_name,'*','ORDER BY time DESC LIMIT '~st~','~per) %}
+      <div class="vList">
+        <ul style="list-style-position:outside;margin:0;padding:0;list-style-type:none" class="list-movies">
+        {% for video in data %}
+          {% if video.id %}
+          <li class="item-movie">
+            <a title="{{video.title}}" href="?id={{video.id}}"><div class="image"><div class="movie-play"><div class="movie-thumbnail" style="background-image:url('{% if video.type != 'youtube' %}https://i.imgur.com/pkt72fu.jpg{% else %}https://img.youtube.com/vi/{{video.url}}/0.jpg{% endif %}');"></div><span class="cripple"></span></div></div><div class="title-movie">{{video.title}}</div></a>
+          </li>
+          {% endif %}
+        {% endfor %}
+        </ul>
+      </div>
+  {{paging('?page=',p,page_max)|replace({'/=':'/','/?':'?'})|raw}}
+    {% endif %}
+{% endif %}
+{{block('end')}}

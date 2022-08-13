@@ -37,7 +37,9 @@ if (is_login()) {
                 break;
         }
     }
-    echo '<div class="phdr"><a href="/cms"><i class="fa fa-home" aria-hidden="true"></i></a>' . $type . ' / <b>' . $file . '</b></div>';
+    if ($_COOKIE['layout'] != 'desktop') $kind_layout = ' / wap';
+    else $kind_layout = ' / web';
+    echo '<div class="phdr"><a href="/cms"><i class="fa fa-home" aria-hidden="true"></i></a>' . $kind_layout . $type . ' / <b>' . $file . '</b></div>';
     //check file
     if (!file_exists($url_file) || !$filename) {
         echo '<div class="rmenu">Tập tin <b>' . $filename . '</b> không tồn tại</div>';
@@ -87,6 +89,12 @@ if (is_login()) {
                 exit();
             }
             //form edit
+            $layout = display_layout();
+            if ($layout != 'mobile' && $code_mirror == 'on') {
+                $rows_code = '200';
+	            echo '
+	        <link rel="stylesheet" href="https://codemirror.net/5/lib/codemirror.css">';
+            } else $rows_code = '35';
             echo '
             <div class="menu">
                 <form action="" method="post">
@@ -96,10 +104,108 @@ if (is_login()) {
                         </p>
                 </form>
             </div>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+            <script	src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+            <script>
+                function getQueryVariable(r){for(var i=window.location.search.substring(1).split("&"),t=0;t<i.length;t++){var n=i[t].split("=");if(n[0]==r)return n[1]}}
+                function saveToFile(){var e=document.getElementById("code").value,t=new Blob([e],{type:"text/plain;charset=utf-8"}),e=getQueryVariable("file");saveAs(t,e+".txt")}            
+            </script>
+            ';
+            
+            if ($layout != 'mobile' && $code_mirror == 'on') {
+	        echo '
+
+
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/mode/overlay.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/twig/twig.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/xml/xml.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/css/css.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/javascript/javascript.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/htmlmixed/htmlmixed.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/mode/multiplex.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/selection/active-line.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/edit/closetag.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/edit/matchbrackets.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/edit/closebrackets.min.js"></script>
+
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/dialog/dialog.min.css" />
+
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/matchesonscrollbar.min.css" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/search.min.js"></script>
+            <script src="hhttps://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/searchcursor.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/matchesonscrollbar.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/match-highlighter.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/jump-to-line.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/match-highlighter.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/dialog/dialog.min.js"></script>
+
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/show-hint.min.css" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/show-hint.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/html-hint.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/css-hint.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/javascript-hint.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/xml-hint.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/anyword-hint.min.js"></script>
+
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/scroll/simplescrollbars.min.css" />
+
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/scroll/annotatescrollbar.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/scroll/scrollpastend.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/scroll/simplescrollbars.min.js"></script>
+
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/display/fullscreen.min.css" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/display/fullscreen.min.js"></script>
+            
+            <script>
+                CodeMirror.defineMode("twigOverlay", function(config, parserConfig) {
+                    return CodeMirror.overlayMode(CodeMirror.getMode(config, "htmlmixed"), CodeMirror.getMode(config, "twig"));
+                });
+                var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+                    lineWrapping: true,
+                    lineNumbers: true,
+                    styleActiveLine: true,
+                    matchBrackets: true,
+                    autoCloseBrackets: true,
+                    matchTags: true,
+                    autoCloseTags: true,
+                    mode: "twigOverlay",
+                    extraKeys: {
+                        "Ctrl-Space": "autocomplete",
+                        "F11": function(cm) {
+                          cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                        },
+                        "Esc": function(cm) {
+                          if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+                        }
+                    }
+                    
+                    
+                    
+                    
+                    
+                    
+                });
+                var cmSize = 1;
+                if (document.getElementById("code").getAttribute("data-cm-size")) {
+                    cmSize = document.getElementById("code").getAttribute("data-cm-size");
+                    console.log(cmSize);
+                }
+                editor.setSize("100%", (window.innerHeight / cmSize ) - 100);
+                window.onresize = function(event){
+                    editor.setSize("100%", (window.innerHeight / cmSize ) - 100);
+                };
+
+            </script>';
+            }
+            echo '
+            
             <div class="phdr"><b><i class="fa fa-cogs" aria-hidden="true"></i> Công cụ</b></div>
             ' . $clipboard . '
             <a href="?' . $_SERVER['QUERY_STRING'] . '&act=rename"><div class="list1"><i class="fa fa-pencil" aria-hidden="true"></i> Đổi tên tập tin</div></a>
             <a href="?' . $_SERVER['QUERY_STRING'] . '&act=delete"><div class="list1"><i class="fa fa-trash" aria-hidden="true"></i> Xóa tập tin</div></a>
+            <a onclick="saveToFile()"><div class="list1"><i class="fa fa-download" aria-hidden="true"></i> Tải về tập tin</div></a>
+            
             ';
         }
     }

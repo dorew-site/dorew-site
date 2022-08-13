@@ -1,0 +1,90 @@
+{# Các hàm dùng chung cho tất cả các bảng #}
+
+{# rewirte url #}
+{% macro rwurl(data) %}{% spaceless %}{{rwurl(data)|replace({'.':'-'})|replace({'--':'-'})}}{% endspaceless %}{% endmacro %}
+
+{# đếm ngược thời gian #}
+{% macro ago(time_ago) %}
+{% spaceless %}
+{% set now = 'now'|date('U')-1160 %}
+{% set time_ago = time_ago|date('U')-1160 %}
+{% set timeht=now|date('U', 'Asia/Ho_Chi_Minh') %}
+{% set time = time_ago|date('U', 'Asia/Ho_Chi_Minh') %}
+{% set time_giay = timeht - time %}
+{% set time_phut = (time_giay / 60 )|round(0,'floor') %}
+{% set time_day = timeht|date('z', 'Asia/Ho_Chi_Minh')-time|date('z', 'Asia/Ho_Chi_Minh') %}
+{% set fulltime = time_ago|date('d.m.Y - H:i', 'Asia/Ho_Chi_Minh') %}
+{% set minitime = time_ago|date('H:i', 'Asia/Ho_Chi_Minh') %}
+{% if time_day == 0 %}
+{% if time_giay <= 60 %}
+{{time_giay}} giây trước
+{% elseif time_phut <= 60 %}
+{{time_phut}} phút trước
+{% else %}
+Hôm nay, {{minitime}}
+{% endif %}
+{% elseif time_day == 1 %}
+Hôm qua, {{minitime}}
+{% else %}
+{{fulltime}}
+{% endif %}
+{% endspaceless %}
+{% endmacro %}
+
+{#===========================================================================================================#}
+
+{# phân trang #}
+{% macro paging(trang,p,max,b) %}
+{% spaceless %}
+  {% if max > 1 %}
+    <center>
+      <div class="pagination">
+      {% set a='<a class="pagenav" href="/'~trang~'' %}
+      {% if p>max %}{% set p=max %}a{% endif %}
+      {% if p>1 %}
+      	{{a|raw}}{{p-1}}{{b}}">«</a>
+      {% endif %}
+      {% if p>3 %}
+      	{{a|raw}}1{{b}}">1</a>
+      {% endif %}
+      {% if p>4 %}
+      	<span>...</span>
+      {% endif %}
+      {% if p>2 %}
+      	{{a|raw}}{{p-2}}{{b}}">{{p-2}}</a>
+      {% endif %}
+      {% if p>1 %}
+      	{{a|raw}}{{p-1}}{{b}}">{{p-1}}</a>
+      {% endif %}
+      <span class="currentpage"><b>{{p}}</b></span>
+      {% if p<max-1 %}
+      	{{a|raw}}{{p+1}}{{b}}">{{p+1}}</a>
+      {% endif %}
+      {% if p<max-2 %}
+      	{{a|raw}}{{p+2}}{{b}}">{{p+2}}</a>
+      {% endif %}
+      {% if p<max-3 %}
+      	<span>...</span>
+      {% endif %}
+      {% if p<max %}
+      	{{a|raw}}{{max}}{{b}}" class="next">{{max}}</a>
+      {% endif %}
+      {% if p<max %}
+      	{{a|raw}}{{p+1}}{{b}}">»</a>
+      {% endif %}
+
+      </div>
+    </center>
+  {% endif %}
+{% endspaceless %}
+{% endmacro %}
+
+{#===========================================================================================================#}
+
+{% macro checkExtension(one) %}
+{% if one|split('.')|last == 'jpg' or  one|split('.')|last == 'png' or one|split('.')|last == 'webp' or one|split('.')|last == 'psd' or one|split('.')|last == 'heic' %}file-image-o{% elseif one|split('.')|last == 'mp4' or  one|split('.')|last == 'mkv' or one|split('.')|last == 'webm' or one|split('.')|last == 'flv' or one|split('.')|last == '3gp' %}file-video-o{% elseif one|split('.')|last == 'mp3' or  one|split('.')|last == 'mkv' or one|split('.')|last == 'm4a' or one|split('.')|last == 'flac' or one|split('.')|last == 'wav' %}file-audio-o{% elseif one|split('.')|last == 'docx' or  one|split('.')|last == 'doc' or one|split('.')|last == 'txt' or one|split('.')|last == 'md' or one|split('.')|last == 'odt' %}file-text-o{% elseif one|split('.')|last == 'txt' or one|split('.')|last == 'md' %}file-text-o{% elseif one|split('.')|last == 'docx' or one|split('.')|last == 'doc' or one|split('.')|last == 'odt' %}file-word-o{% elseif one|split('.')|last == 'xls' or one|split('.')|last == 'xlsx' %}file-excel-o{% elseif one|split('.')|last == 'ppt' or one|split('.')|last == 'pptx' %}file-powerpoint-o{% elseif one|split('.')|last == 'pdf' %}file-pdf-o{% elseif one|split('.')|last == 'zip' or one|split('.')|last == 'rar' or one|split('.')|last == '7z' or one|split('.')|last == 'tar' %}file-archive-o{% elseif one|split('.')|last == 'cpp' or one|split('.')|last == 'cs' or one|split('.')|last == 'php' or one|split('.')|last == 'html' or one|split('.')|last == 'js' or one|split('.')|last == 'py' %}file-code-o{% elseif one|split('.')|last == 'sql' %}database{% else %}file-o{% endif %}
+{% endmacro %}
+
+{#===========================================================================================================#}
+
+{% macro size(byte) %}{% if byte >= '1073741824' %}{% set show = (byte|trim/1073741824)|round(2,'floor')~' GB' %}{% elseif byte >= '1048576' %}{% set show = (byte|trim/1048576)|round(2,'floor')~' MB' %}{% elseif byte >= '1024' %}{% set show = (byte|trim/1024)|round(2,'floor')~' Kb' %}{% else %}{% set show = byte~' byte' %}{% endif %}{{show}}{% endmacro %}

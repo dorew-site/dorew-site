@@ -1,0 +1,90 @@
+{% use '_layout' %}
+
+{% from '_functions' import paging,size %}
+
+{% set table_name = 'youtube' %}
+{% set title = 'Tải lên video' %}
+{{block('head')}}
+
+<div class="hdr left">Thêm video từ Youtube</div>
+<div class="bg">
+	{% if request_method()|lower == 'post' %}
+  		{% set url = get_post('youtube') %}
+  		{% set id_ytb = get_youtube_id(url) %}
+    	{% set title_ytb = get_youtube_title(url) %}
+		{% if id_ytb and title_ytb %}
+  			{% set row_youtube = {'time':'now'|date('U'),'title':title_ytb,'url':id_ytb,'type':'youtube'} %}
+  			{% do insert_row_array_table(table_name, row_youtube) %}
+			{{redirect('/')}}
+		{% else %}
+  <div class="rmenu">Dữ liệu không đúng!</div>
+		{% endif %}
+	{% endif %}
+  {% set sharelink = get_get('url') %}
+  <form method="post">
+    <table style="width:100%">
+      <tr>
+        <td class="e1">Link video youtube:</td>
+        <td class="w3-left-align e2"><input type="text" name="youtube" placeholder="VD: https://www.youtube.com/watch?v=TF70IYJN4sc" class="form-control" value="{{sharelink}}"/></td>
+      </tr>
+    </table>
+    <div class="w3-center"><button type="submit" name="submit" class="btn btn-primary" style="width:98%">Chia sẻ ngay bây giờ</button></div>
+  </form>
+</div>
+
+{% set maxAllow = 5242880*4 %}
+<div class="hdr left">Tải lên từ bộ nhớ thiết bị (Tối đa {{size(maxAllow)}})</div>
+<div class="bg">
+	{% if request_method()|lower == 'post' and get_get('ipfs') %}
+  		{% set cid = get_post('fileCID') %}
+    	{% set title = get_post('title') %}
+		{% if cid and title %}
+  			{% set row_youtube = {'time':'now'|date('U'),'title':title,'url':cid,'type':'ipfs'} %}
+  			{% do insert_row_array_table(table_name, row_youtube) %}
+			{{redirect('/')}}
+		{% else %}
+  <div class="rmenu">Dữ liệu không đúng!</div>
+		{% endif %}
+	{% endif %}
+    <form id="form" method="post" action="?ipfs=ok">
+      <center><div style="margin:5px;" id="dai"></div></center>
+      <table style="width:100%">
+        <tr>
+          <td class="e1">Tiêu đề/Trạng thái:</td>
+          <td class="w3-left-align e2"><input type="text" name="title" value="" class="form-control"/></td>
+        </tr>
+        <tr>
+          <td class="e1">Chọn file:</td>
+          <td class="w3-left-align e2"><input id="uploadfile" type="file" name="file" class="form-control" style="height:50px;border:0"/></td>
+        </tr>
+      </table>
+      <input id="fileCID" name="fileCID" value="" type="hidden"/>
+      <p style="display:none">
+        <button type="button" id="btnUpload" class="btn btn-primary btn-block" onclick="frUpload()">Chia sẻ ngay bây giờ</button>
+      </p>
+    </form>
+  </div>
+<script>
+  $("#uploadfile").on("change", function() {
+    var e = document.getElementById("uploadfile"),
+        a = e.files[0].name,
+        c = encodeURI(a);
+    document.getElementById('btnUpload').style.visibility = "hidden";
+    document.getElementById('btnUpload').style.display = "none";
+    var d1 = document.getElementById('dai');
+    d1.insertAdjacentHTML('beforeend', '<img src="https://i.imgur.com/1TyFaOM.gif" />');
+    fetch("https://api.nft.storage/upload", {
+        method: "post",
+        headers: {
+            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDI4ZjRFNDJEYjMxQWRiODdFYjQ3M2I2NmJjNjI1MTJlMzE4OEVGMjAiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYzNzUxODc3NDE4MCwibmFtZSI6IkRvcmV3In0._fktZLU7Uj0o3cJgPLlSJOBX3ajw2i-yUQxUfsTi1Yw"
+        },
+        body: e.files[0]
+    }).then(e => e.json()).then(e => {
+        console.log(e.value.cid);
+        $("#fileCID").val(e.value.cid);
+      	document.getElementById("form").submit();
+    })
+  }),document.querySelector("#uploadfile").onclick = function(){document.querySelector("#btnUpload").click()};
+</script>
+
+{{block('end')}}

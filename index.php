@@ -12,7 +12,7 @@
 
 define('_DOREW', 1);
 $system_path = '';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/core.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/config.php';
 
 if (defined('STDIN')) {
 	chdir(dirname(__FILE__));
@@ -42,7 +42,7 @@ define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
 define('BASEPATH', $system_path);
 define('VIEWPATH', $dir_tpl);
 
-require_once BASEPATH . 'libs/core.php';
+require_once BASEPATH . 'libs/twig.home.php';
 require_once BASEPATH . 'libs/vendor/autoload.php';
 
 $ext_path = explode('.', $pathTWIG);
@@ -95,12 +95,22 @@ if (in_array($check_ext, $image_ext)) {
 $loader = new \Twig\Loader\FilesystemLoader(VIEWPATH);
 $twig = new \Twig\Environment($loader);
 spl_autoload_register(function ($className) {
-	$filepath = BASEPATH . "libs/" . $className . ".php";
+	$filepath = BASEPATH . "libs/dorew/" . $className . ".php";
 	if (file_exists($filepath)) require_once $filepath;
 	//echo $className;
 });
-$twig->addExtension(new TwigFunctions());
-$twig->addExtension(new TwigFilter());
-echo $twig->render($pathTWIG, [
+$twig->addExtension(new FormURI());
+if ($type_db == 'phpSQLite3') {
+	$twig->addExtension(new phpSQLite3());
+} else $twig->addExtension(new QuerySQL());
+$twig->addExtension(new SomeFunctions());
+$twig->addExtension(new SomeFilter());
+
+$twigrender = $twig->render($pathTWIG, [
 	'dir' => ['css' => '/', 'js' => '/', 'img' => '/']
 ]);
+
+if (get_format($check_ext) == 'text/html') {
+    echo str_replace('</body>', '</body>
+    <!--- Powered By DorewSite --->', $twigrender);
+} else echo $twigrender;

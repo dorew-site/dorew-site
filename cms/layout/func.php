@@ -22,6 +22,16 @@ function is_login()
     }
 }
 
+function display_layout()
+{
+	$ua = $_SERVER['HTTP_USER_AGENT'];
+	$arrUA = strtolower($ua);
+	if (preg_match('/windows|ipod|ipad|iphone|android|webos|blackberry|midp/', $arrUA) && preg_match('/mobile/', $arrUA)) {
+		return 'mobile';
+	} elseif (preg_match('/mobile/', $arrUA)) return 'mobile';
+	else return 'desktop';
+}
+
 function paging($url, $p, $max)
 {
     $p = (int)$p;
@@ -260,3 +270,4 @@ function file_size($byte)
     }
     return $result;
 }
+
