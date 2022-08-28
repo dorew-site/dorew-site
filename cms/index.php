@@ -41,6 +41,8 @@ if (!$db) {
             $new_db_info = str_replace("'pass' => '" . $config_db['QuerySQL']['pass'] . "'", "'pass' => '" . $new_db_pass . "'", $new_db_info);
             $new_db_info = str_replace("'db' => '" . $config_db['QuerySQL']['db'] . "'", "'db' => '" . $new_db_name . "'", $new_db_info);
             $new_db_info = str_replace("'pma' => '" . $config_db['QuerySQL']['pma'] . "'", "'pma' => '" . $new_phpmyadmin . "'", $new_db_info);
+            $new_db_info = str_replace('$account_admin = \'' . $account_admin . '\';', '$account_admin = \'' . $admin_user . '\';', $new_db_info);
+            $new_db_info = str_replace('$password_admin = \'' . $password_admin . '\';', '$password_admin = \'' . $admin_pass . '\';', $new_db_info);
             //check if database infomation is correct
             $connect = mysqli_connect($new_db_host, $new_db_user, $new_db_pass, $new_db_name);
             if (!$connect) {
