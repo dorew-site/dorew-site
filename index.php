@@ -12,7 +12,7 @@
 
 define('_DOREW', 1);
 $system_path = '';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/config.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/core.php';
 
 if (defined('STDIN')) {
 	chdir(dirname(__FILE__));
@@ -42,7 +42,7 @@ define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
 define('BASEPATH', $system_path);
 define('VIEWPATH', $dir_tpl);
 
-require_once BASEPATH . 'libs/twig.home.php';
+require_once BASEPATH . 'libs/core.php';
 require_once BASEPATH . 'libs/vendor/autoload.php';
 
 $ext_path = explode('.', $pathTWIG);
@@ -97,20 +97,32 @@ $twig = new \Twig\Environment($loader);
 spl_autoload_register(function ($className) {
 	$filepath = BASEPATH . "libs/dorew/" . $className . ".php";
 	if (file_exists($filepath)) require_once $filepath;
-	//echo $className;
 });
-$twig->addExtension(new FormURI());
-if ($type_db == 'phpSQLite3') {
-	$twig->addExtension(new phpSQLite3());
-} else $twig->addExtension(new QuerySQL());
-$twig->addExtension(new SomeFunctions());
+
+$GET_FormURI = new FormURI();
+$GET_SomeFunctions = new SomeFunctions();
+$METHOD_QuerySQL = new QuerySQL();
+
+$twig->addExtension(new BBcode());
+$twig->addExtension($GET_FormURI);
+$twig->addExtension($METHOD_QuerySQL);
+$twig->addExtension($GET_SomeFunctions);
 $twig->addExtension(new SomeFilter());
 
-$twigrender = $twig->render($pathTWIG, [
-	'dir' => ['css' => '/', 'js' => '/', 'img' => '/']
+echo $twig->render($pathTWIG, [
+    'login' => $GLOBALS['METHOD_QuerySQL']->is_login(),
+    'current_url' => $GLOBALS['GET_FormURI']->current_url(),
+    'layout' => $GLOBALS['GET_SomeFunctions']->display_layout(),
+	'dir' => ['css' => '/', 'js' => '/', 'img' => '/'],
+	'api' => [
+        'is_login' => $GLOBALS['METHOD_QuerySQL']->is_login(),
+        'uri' => [
+            'segments' => $GLOBALS['GET_FormURI']->get_uri_segments(),
+            'current' => $GLOBALS['GET_FormURI']->current_url()
+        ],
+        'browser' => [
+            'ip' => $GLOBALS['GET_SomeFunctions']->ip(),
+            'user_agent' => $GLOBALS['GET_SomeFunctions']->user_agent()
+        ]
+   ]
 ]);
-
-if (get_format($check_ext) == 'text/html') {
-    echo str_replace('</body>', '</body>
-    <!--- Powered By DorewSite --->', $twigrender);
-} else echo $twigrender;

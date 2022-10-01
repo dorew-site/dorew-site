@@ -42,8 +42,8 @@ if (!$db && $uri_segments[1] != 'cms' && !in_array($uri_segments[2], ['index.php
     <link rel="shortcut icon" href="https://i.imgur.com/2pfDfoN.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="/cms/layout/assets/default.css" rel="stylesheet">
-    <link href="/cms/layout/assets/main.css?t=<?php echo time(); ?>" rel="stylesheet">
+    <link href="/assets/system/default.css" rel="stylesheet">
+    <link href="/assets/system/main.css?t=<?php echo time(); ?>" rel="stylesheet">
     <title>
         <?php echo $title ? $title : 'Dorew'; ?>
     </title>
@@ -55,6 +55,6 @@ if (!$db && $uri_segments[1] != 'cms' && !in_array($uri_segments[2], ['index.php
         <br>Dorew - Thích Ngao Du
     </div>
     <?php
-    if (is_login()) {
-        echo '<div class="phdr" style="text-align: center;" id="head"><a href="/cms"><i class="fa fa-home fa-lg" aria-hidden="true"></i></a> • <a href="/cms/database"><i class="fa fa-database fa-lg" aria-hidden="true"></i></a>  • <a href="/cms?act=logout"><i class="fa fa-sign-out fa-lg" aria-hidden="true"></i></a></div>';
+    if (is_login() && $db) {
+        echo '<div class="phdr" style="text-align: center;" id="head"><a href="/cms"><i class="fa fa-home fa-lg" aria-hidden="true"></i></a> • <a href="'. $url_phpmyadmin .'"><i class="fa fa-database fa-lg" aria-hidden="true"></i></a>  • <a href="/cms?act=logout"><i class="fa fa-sign-out fa-lg" aria-hidden="true"></i></a></div>';
     }

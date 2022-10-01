@@ -17,12 +17,12 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ERROR);
 ini_set('default_charset', 'UTF-8');
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/config.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/core.php';
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 $root = (isset($_SERVER['HTTPS']) ? "https://" : "http://") . $_SERVER['HTTP_HOST'];
 $root .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
-
+$config['base_url'] = $root;
 function _remove_relative_directory($uri)
 {
 	$uris = array();

@@ -2,10 +2,11 @@
 Xây dựng website với twig
 
 > **Cập nhật**
-* v0.2.0-RC2
+* v0.2.x
   * **2022-05-09** v0.1.0
   * **2022-06-02** v0.2.0-RC1
   * **2022-07-11** v0.2.0-RC2
+  * **2022-09-28** v0.2.1
 * v0.3.x
   * **2022-08-13** v0.3.0
 
@@ -31,8 +32,4 @@ Xây dựng website với twig
 ![](https://i.imgur.com/AtS7IcD.png)
 ![](https://i.imgur.com/5lkuF4a.png)
 
-- Template mặc định: [Dorew | Code Upload file lên IPFS cho DorewSite](https://dorew.gq/forum/318/code-upload-file-len-ipfs-cho-dorewsite.html)
-
-![](https://i.imgur.com/JTt9yzB.png)
-
-- Hướng dẫn sử dụng: **/cms/use.php**
+- Hướng dẫn sử dụng: [DorewSite | Wiki](https://github.com/dorew-site/dorew-site/wiki)

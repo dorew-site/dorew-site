@@ -37,9 +37,7 @@ if (is_login()) {
                 break;
         }
     }
-    if ($_COOKIE['layout'] != 'desktop') $kind_layout = ' / wap';
-    else $kind_layout = ' / web';
-    echo '<div class="phdr"><a href="/cms"><i class="fa fa-home" aria-hidden="true"></i></a>' . $kind_layout . $type . ' / <b>' . $file . '</b></div>';
+    echo '<div class="phdr"><a href="/cms"><i class="fa fa-home" aria-hidden="true"></i></a>' . $type . ' / <b>' . $file . '</b></div>';
     //check file
     if (!file_exists($url_file) || !$filename) {
         echo '<div class="rmenu">Tập tin <b>' . $filename . '</b> không tồn tại</div>';
@@ -90,7 +88,7 @@ if (is_login()) {
             }
             //form edit
             $layout = display_layout();
-            if ($layout != 'mobile' && $code_mirror == 'on') {
+            if ($layout != 'mobile') {
                 $rows_code = '200';
 	            echo '
 	        <link rel="stylesheet" href="https://codemirror.net/5/lib/codemirror.css">';
@@ -106,13 +104,20 @@ if (is_login()) {
             </div>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
             <script	src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
+
             <script>
                 function getQueryVariable(r){for(var i=window.location.search.substring(1).split("&"),t=0;t<i.length;t++){var n=i[t].split("=");if(n[0]==r)return n[1]}}
-                function saveToFile(){var e=document.getElementById("code").value,t=new Blob([e],{type:"text/plain;charset=utf-8"}),e=getQueryVariable("file");saveAs(t,e+".txt")}            
+                function saveToFile(){var e=document.getElementById("code").value,t=new Blob([e],{type:"text/plain;charset=utf-8"}),e=getQueryVariable("file");saveAs(t,e)} 
+                
+                
+                if(Cookies.get("editor_mode")==="two"){
+                    window.location.href = window.location.href.replace("\/manager\/edit.php?file","\/manager\/edit2.php?file");
+                }
             </script>
             ';
             
-            if ($layout != 'mobile' && $code_mirror == 'on') {
+            if ($layout != 'mobile') {
 	        echo '
 
 
@@ -131,8 +136,7 @@ if (is_login()) {
 
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/dialog/dialog.min.css" />
 
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/matchesonscrollbar.min.css" />
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/search.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/matchesonscrollbar.min.css" /><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/search.min.js"></script>
             <script src="hhttps://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/searchcursor.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/matchesonscrollbar.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/match-highlighter.min.js"></script>
@@ -196,6 +200,22 @@ if (is_login()) {
                     editor.setSize("100%", (window.innerHeight / cmSize ) - 100);
                 };
 
+
+                function changeEditMode() {
+                    let current_url = window.location.href;
+                    if(window.location.href.includes("/manager/edit2.php?file")){
+                        Cookies.set("editor_mode", "one");
+                        window.location.href = current_url.replace("\/manager\/edit2.php?file","\/manager\/edit.php?file");
+        
+                    }
+                    else{
+                        Cookies.set("editor_mode", "two");
+                        window.location.href = current_url.replace("\/manager\/edit.php?file","\/manager\/edit2.php?file");
+                        
+                    }
+                }
+            
+
             </script>';
             }
             echo '
@@ -205,7 +225,8 @@ if (is_login()) {
             <a href="?' . $_SERVER['QUERY_STRING'] . '&act=rename"><div class="list1"><i class="fa fa-pencil" aria-hidden="true"></i> Đổi tên tập tin</div></a>
             <a href="?' . $_SERVER['QUERY_STRING'] . '&act=delete"><div class="list1"><i class="fa fa-trash" aria-hidden="true"></i> Xóa tập tin</div></a>
             <a onclick="saveToFile()"><div class="list1"><i class="fa fa-download" aria-hidden="true"></i> Tải về tập tin</div></a>
-            
+            <a onclick="changeEditMode()"><div class="list1"><i class="fa fa-text-height"></i> Chuyển chế độ chỉnh sửa</div></a>
+
             ';
         }
     }

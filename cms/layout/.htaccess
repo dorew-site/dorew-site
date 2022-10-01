@@ -1,0 +1,4 @@
+<filesmatch ".*"="">
+    Order Allow,Deny
+    Deny from All
+</filesmatch>

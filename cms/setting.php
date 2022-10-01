@@ -17,7 +17,7 @@ require_once $root . '/cms/layout/func.php';
 $title = 'Cấu hình tập tin';
 include $root . '/cms/layout/header.php';
 
-if (!is_login()) {
+if (!$db || !is_login()) {
     header('Location: /cms');
     exit();
 } else {
@@ -26,26 +26,20 @@ if (!is_login()) {
         $new_index = strtolower($_POST['new_index']) ?: 'index';
         $new_404 = strtolower($_POST['new_404']) ?: '_404';
         $new_login = strtolower($_POST['new_login']) ?: 'dorew';
-        $new_check_code_mirror = strtolower($_POST['code_mirror']) ?: 'on';
         $new_notify_update_version = strtolower($_POST['new_version']) ?: 'hidden';
+        $new_check_code_mirror = strtolower($_POST['code_mirror']) ?: 'on';
         //get old page
-        $old_core = file_get_contents($root . '/cms/config.php');
+        $old_core = file_get_contents($root . '/cms/core.php');
         //replace old page with new page
         $new_core = str_replace('$default_index = \''.$default_index.'\';', '$default_index = \'' . $new_index . '\';', $old_core);
         $new_core = str_replace('$default_404 = \''.$default_404.'\';', '$default_404 = \'' . $new_404 . '\';', $new_core);
         $new_core = str_replace('$default_login = \''.$default_login.'\';', '$default_login = \'' . $new_login . '\';', $new_core);
-        $new_core = str_replace('$code_mirror = \''.$code_mirror.'\';', '$code_mirror = \'' . $new_check_code_mirror . '\';', $new_core);
-        $new_core = str_replace('$notify_update_version = \''.$notify_update_version.'\';', '$notify_update_version = \'' . $new_notify_update_version . '\';', $new_core);
         //save new page
-        file_put_contents($root . '/cms/config.php', $new_core);
-        //echo "<textarea rows='10'>$new_core</textarea>";
+        file_put_contents($root . '/cms/core.php', $new_core);
         //notification
         echo '<div class="gmenu">Cài đặt thành công!</div>';
         header('Refresh: 3; url=/cms/setting.php');
         //exit();
-    }
-    if ($notify_update_version == 'display') {
-        $checked_notify_version = ' checked';
     }
     echo '<div class="menu">
         <form method="post">
@@ -61,23 +55,6 @@ if (!is_login()) {
                 <tr>
                     <td class="left"><b>Cookie login:</b></td>
                     <td style="text-align:left"><input type="text" name="new_login" value="' . $default_login . '" placeholder="dorew" /></td>
-                </tr>
-            </table>
-            <table width="100%">
-                <tr>
-                    <td style="width:100%"><input class="w3-check" type="checkbox" name="new_version" value="display"' . $checked_notify_version . '> Cập nhật phiên bản mới</td>
-                </tr>
-            </table>
-            <table width="100%">
-                <tr>
-                    <td style="width:100%">
-                        <b>Chỉnh sửa nâng cao: </b>
-                        <select name="code_mirror">
-                            <option value="on"'; if ($code_mirror == 'on') echo ' selected'; echo '>Bật</option>
-                            <option value="off"'; if ($code_mirror == 'off') echo ' selected'; echo '>Tắt</option>
-                            </select>
-                        <span style="color:#444"> (Không hoạt động đối với mobile)</span>
-                    </td>
                 </tr>
             </table>
             <p><button type="submit">Thay đổi</button></p>

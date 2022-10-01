@@ -38,41 +38,41 @@ function paging($url, $p, $max)
     $max = (int)$max;
     $b = '';
     if ($max > 1) {
-        $a = '<a class="pagenav" href="' . $url;
+        $a = ' <a class="pagenav" href="' . $url;
         if ($p > $max) {
             $p = $max;
             $b .= 'a';
         }
         if ($p > 1) {
-            $b .= $a . ($p - 1) . '">&laquo;</a>';
+            $b .= $a . ($p - 1) . '">&laquo;</a> ';
         }
         if ($p > 3) {
             $b .= $a . '1">1</a>';
         }
         if ($p > 4) {
-            $b .= '<span class="disabled">...</span>';
+            $b .= ' <span class="disabled">...</span> ';
         }
         if ($p > 2) {
-            $b .= $a . ($p - 2) . '">' . ($p - 2) . '</a>';
+            $b .= $a . ($p - 2) . '">' . ($p - 2) . '</a> ';
         }
         if ($p > 1) {
-            $b .= $a . ($p - 1) . '">' . ($p - 1) . '</a>';
+            $b .= $a . ($p - 1) . '">' . ($p - 1) . '</a> ';
         }
-        $b .= '<span class="currentpage"><b>' . $p . '</b></span>';
+        $b .= ' <span class="currentpage"><b>' . $p . '</b></span> ';
         if ($p < ($max - 1)) {
-            $b .= $a . ($p + 1) . '">' . ($p + 1) . '</a>';
+            $b .= $a . ($p + 1) . '">' . ($p + 1) . '</a> ';
         }
         if ($p < ($max - 2)) {
-            $b .= $a . ($p + 2) . '">' . ($p + 2) . '</a>';
+            $b .= $a . ($p + 2) . '">' . ($p + 2) . '</a> ';
         }
         if ($p < ($max - 3)) {
-            $b .= '<span class="disabled">...</span>';
+            $b .= ' <span class="disabled">...</span> ';
         }
         if ($p < $max) {
-            $b .= $a . $max . '">' . $max . '</a>';
+            $b .= $a . $max . '">' . $max . '</a> ';
         }
         if ($p < $max) {
-            $b .= $a . ($p + 1) . '">&raquo;</a>';
+            $b .= $a . ($p + 1) . '">&raquo;</a> ';
         }
         return $b;
     }

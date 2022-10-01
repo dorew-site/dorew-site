@@ -13,15 +13,9 @@ define('_DOREW', 1);
 
 ini_set('display_errors', 0);
 require_once $_SERVER['DOCUMENT_ROOT'] . '/cms/config.php';
-include $root . '/cms/layout/header.php';
 
-$db = mysqli_connect(
-    $config_db['QuerySQL']['host'],
-    $config_db['QuerySQL']['user'],
-    $config_db['QuerySQL']['pass'],
-    $config_db['QuerySQL']['db']
-);
 if (!$db) {
+    include $root . '/cms/layout/header.php';
     if ($_GET['act'] == 'install') {
         echo '<div class="phdr"><b><i class="fa fa-cog" aria-hidden="true"></i> Cấu hình</b></div>
         <style>input{width:60%}</style>';
@@ -34,13 +28,13 @@ if (!$db) {
             $new_db_pass = $_POST['pass'];
             $new_db_name = $_POST['name'];
             //get old database infomation
-            $old_db_info = file_get_contents($root . '/cms/config.php');
+            $old_db_info = file_get_contents($root . '/cms/core.php');
             //replace old database infomation with new database infomation
-            $new_db_info = str_replace("'host' => '" . $config_db['QuerySQL']['host'] . "'", "'host' => '" . $new_db_host . "'", $old_db_info);
-            $new_db_info = str_replace("'user' => '" . $config_db['QuerySQL']['user'] . "'", "'user' => '" . $new_db_user . "'", $new_db_info);
-            $new_db_info = str_replace("'pass' => '" . $config_db['QuerySQL']['pass'] . "'", "'pass' => '" . $new_db_pass . "'", $new_db_info);
-            $new_db_info = str_replace("'db' => '" . $config_db['QuerySQL']['db'] . "'", "'db' => '" . $new_db_name . "'", $new_db_info);
-            $new_db_info = str_replace("'pma' => '" . $config_db['QuerySQL']['pma'] . "'", "'pma' => '" . $new_phpmyadmin . "'", $new_db_info);
+            $new_db_info = str_replace('$db_host = \'' . $db_host . '\';', '$db_host = \'' . $new_db_host . '\';', $old_db_info);
+            $new_db_info = str_replace('$db_user = \'' . $db_user . '\';', '$db_user = \'' . $new_db_user . '\';', $new_db_info);
+            $new_db_info = str_replace('$db_pass = \'' . $db_pass . '\';', '$db_pass = \'' . $new_db_pass . '\';', $new_db_info);
+            $new_db_info = str_replace('$db_name = \'' . $db_name . '\';', '$db_name = \'' . $new_db_name . '\';', $new_db_info);
+            $new_db_info = str_replace('$url_phpmyadmin = \'' . $url_phpmyadmin . '\';', '$url_phpmyadmin = \'' . $new_phpmyadmin . '\';', $new_db_info);
             $new_db_info = str_replace('$account_admin = \'' . $account_admin . '\';', '$account_admin = \'' . $admin_user . '\';', $new_db_info);
             $new_db_info = str_replace('$password_admin = \'' . $password_admin . '\';', '$password_admin = \'' . $admin_pass . '\';', $new_db_info);
             //check if database infomation is correct
@@ -50,24 +44,30 @@ if (!$db) {
                 $content = 'Thông tin cấu hình không chính xác. Không thể kết nối với cơ sở dữ liệu';
             } else {
                 //save new config
-                file_put_contents($root . '/cms/config.php', $new_db_info);
-                //create new sqlite database
-                file_put_contents($config_db['phpSQLite']['directory'] . $config_db['phpSQLite']['path'], '');
+                file_put_contents($root . '/cms/core.php', $new_db_info);
+                //import sample data into database
+                $table_name = 'ipfs';
+                $sql = "CREATE TABLE IF NOT EXISTS `$table_name` (
+                    `id` int(11) UNSIGNED NULL AUTO_INCREMENT,
+                    `time` int(11) NOT NULL,
+                    `filename` varchar(255) NOT NULL,
+                    `filesize` int(11) NOT NULL,
+                    `CID` varchar(255) NOT NULL,
+                    `password` varchar(255) NOT NULL,
+                    `passphrase` varchar(255) NOT NULL,
+                    `ip` varchar(255) NOT NULL,
+                    `user_agent` varchar(255) NOT NULL,
+                    PRIMARY KEY (`id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+                $db_new = new mysqli($new_db_host, $new_db_user, $new_db_pass, $new_db_name);
+                $db_new->query($sql);
                 //notification
                 $notice = 'gmenu';
                 $content = 'Kết nối với cơ sở dữ liệu thành công!
-                <br/>- Tài khoản quản trị: <b>' . $admin_user . '</b>
-                <br/>- Mật khẩu: <b>' . $admin_pass . '</b>';
-                if (!class_exists('SQLite3')) {
-                    $content .= '
-                    <br/>- Hosting của bạn chưa được kích hoạt SQLite3, 
-                    bạn có thể kích hoạt chúng ở tập tin <b>php.ini</b>, 
-                    sử dụng: <b style="color:red">extension=sqlite3</b>
-                    <br/>Nếu không kích hoạt SQLite3, bạn có thể tiếp tục sử dụng với hệ quản trị MySQL.
-                    ';
-                }
-                $content .= '<br/>Bạn sẽ được chuyển đến trang quản trị sau 5s...';
-                header('Refresh: 5; url=/cms');
+                <br/>Tài khoản quản trị: <b>' . $admin_user . '</b>
+                <br/>Mật khẩu: <b>' . $admin_pass . '</b>
+                <br/>Bạn sẽ được chuyển đến trang quản trị sau 3s...';
+                header('Refresh: 3; url=/cms');
             }
         }
         if (in_array($notice, ['rmenu', 'gmenu'])) {
@@ -115,11 +115,13 @@ if (!$db) {
         </form>
         ';
     }
+    include $root . '/cms/layout/footer.php';
 } else {
 
     require_once $root . '/cms/layout/func.php';
 
     if (is_login()) {
+        include $root . '/cms/layout/header.php';
         $type = strtolower($_GET['type']);
         $list_type = ['css', 'js'];
         $display_type = ['CSS', 'Javascript'];
@@ -127,9 +129,6 @@ if (!$db) {
         if ($_GET['act'] == 'logout') {
             setcookie($account_admin, '', 0);
             header('Location: /cms');
-        }
-        if ($notify_update_version == 'display') {
-            include $root . '/cms/layout/act/version.php';
         }
         include $root . '/cms/layout/act/manager.php';
         if (!in_array($type, $list_type)) {
@@ -248,40 +247,8 @@ if (!$db) {
         </div>';
             echo '</form>';
         }
+        include $root . '/cms/layout/footer.php';
     } else {
-        echo '<div class="phdr">Đăng Nhập</div>';
-        $user = strtolower($_POST['user']);
-        $pass = $_POST['pass'];
-        if (strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
-            if ($user == $account_admin && $pass == $password_admin) {
-                $div = 'gmenu';
-                $result = 'Đăng nhập thành công';
-                setcookie($account_admin, $new_password, time() + 31536000);
-                header('Location: /cms');
-                exit();
-            } else {
-                $div = 'rmenu';
-                $result = 'Thông tin đăng nhập sai cmnr!';
-            }
-        }
-        if (isset($result)) {
-            echo '<div class="' . $div . '">' . $result . '</div>';
-        }
-        echo '
-        <div class="menu">
-            <form method="post" action="">
-                <p>
-                    <i class="fa fa-user" aria-hidden="true"></i> Tên tài khoản:<br />
-                    <input type="text" class="w3-input" name="user">
-                </p>
-                <p>
-                    <i class="fa fa-lock" aria-hidden="true"></i> Mật khẩu:<br />
-                    <input type="password" class="w3-input" name="pass">
-                </p>
-                <p align="center"><button style="border: 2px solid green;" class="button" type="submit">Đăng Nhập</button></p>
-            </form>
-        </div>
-        ';
+        require_once $root . '/cms/manager/login.php';
     }
 }
-include $root . '/cms/layout/footer.php';

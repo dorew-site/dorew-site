@@ -16,27 +16,17 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
 {
     public function __construct()
     {
-        global  $config_db, $default_login;
+        global $db_host, $db_user, $db_pass, $db_name, $default_login;
         $this->core_cookie = $default_login;
-        $this->db = new mysqli(
-            $config_db['QuerySQL']['host'],
-            $config_db['QuerySQL']['user'],
-            $config_db['QuerySQL']['pass'],
-            $config_db['QuerySQL']['db']
-        );
-        if (empty($this->db)) {
+        $this->db = new mysqli($db_host, $db_user, $db_pass, $db_name);
+        $this->conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+        if (empty($this->db) || empty($this->conn)) {
             //throw new Exception('Connect database failed');
             header('Location: /cms');
             exit();
-        } else {
-            $this->db->set_charset($config_db['QuerySQL']['charset']);
-            $this->db->query("SET NAMES '{$config_db['QuerySQL']['charset']} COLLATE '{$config_db['QuerySQL']['collation']}'");
-            $this->conn = mysqli_connect(
-                $config_db['QuerySQL']['host'],
-                $config_db['QuerySQL']['user'],
-                $config_db['QuerySQL']['pass'],
-                $config_db['QuerySQL']['db']
-            );
+        }
+        if (!empty($this->conn)) {
+            mysqli_set_charset($this->conn, 'UTF8');
         }
     }
 
@@ -78,6 +68,8 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
             new \Twig\TwigFunction('delete_cookie', [$this, 'delete_cookie']),
             new \Twig\TwigFunction('get_cookie', [$this, 'get_cookie']),
             new \Twig\TwigFunction('is_login', [$this, 'is_login']),
+
+            new \Twig\TwigFunction('session', [$this, 'dsession']),
         ];
     }
 
@@ -197,7 +189,7 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "SELECT COUNT(*) FROM `$table_name`";
-                $sql_operator = ['>=', '<=', '>', '<', '=','!='];
+                $sql_operator = ['>=', '<=', '>', '<', '=', '!='];
                 if ($where) {
                     //where: {'column': 'value', 'column2': 'value2','operator': '>='}
                     $operator = $where['operator'] ? $where['operator'] : '=';
@@ -735,6 +727,30 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
             return $data['nick'];
         } else {
             return false;
+        }
+    }
+
+    function dsession($name = null, $value = null, $type = null)
+    {
+        switch ($type) {
+            case 'start':
+                session_start();
+                break;
+            case 'destroy':
+                session_destroy();
+                break;
+            case 'set':
+                $_SESSION[$name] = $value;
+                break;
+            case 'delete':
+                unset($_SESSION[$name]);
+                break;
+            case 'get':
+                return $_SESSION[$name];
+                break;
+            default:
+                if (!$_SESSION[$name] || !$name) return false;
+                return $_SESSION[$name];
         }
     }
 }

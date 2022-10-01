@@ -17,6 +17,8 @@ class SomeFilter extends \Twig\Extension\AbstractExtension
     public function getFilters()
     {
         return [
+            new \Twig\TwigFilter('array_unique', [$this, 'twig_array_unique']),
+
             new \Twig\TwigFilter('get_keys', [$this, 'twig_get_keys']),
             new \Twig\TwigFilter('rsort', [$this, 'twig_rsort']),
             new \Twig\TwigFilter('asort', [$this, 'twig_asort']),
@@ -28,9 +30,9 @@ class SomeFilter extends \Twig\Extension\AbstractExtension
             new \Twig\TwigFilter('md5', [$this, 'twig_md5']),
             new \Twig\TwigFilter('sha1', [$this, 'twig_sha1']),
             new \Twig\TwigFilter('htmlspecialchars', [$this, 'twig_htmlspecialchars']),
-            
+
             new \Twig\TwigFilter('truncate', [$this, 'twig_truncate']),
-            
+
             new \Twig\TwigFilter('json_decode', [$this, 'twig_json_decode']),
             new \Twig\TwigFilter('url_decode', [$this, 'twig_url_decode']),
             new \Twig\TwigFilter('ju_encode', [$this, 'twig_ju_encode']),
@@ -58,11 +60,17 @@ class SomeFilter extends \Twig\Extension\AbstractExtension
         ];
     }
 
+    function twig_array_unique($array)
+    {
+        return array_unique($array);
+    }
+
     /* --- SORT --- */
     /**
      * sort and reverse are twig's two default filters
      * some other filters: get_keys, rsort, asort, ksort, arsort, krsort, shuffle
      */
+
 
     function twig_get_keys($array)
     {
@@ -116,12 +124,12 @@ class SomeFilter extends \Twig\Extension\AbstractExtension
     {
         return sha1($text);
     }
-    
+
     function twig_htmlspecialchars($text)
     {
         return htmlspecialchars($text);
     }
-    
+
     /* --- TRUNCATE --- */
 
     function twig_truncate($string, int $start = 0, int $length = 0)
