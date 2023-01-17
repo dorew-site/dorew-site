@@ -9,6 +9,8 @@ Xây dựng website với twig
   * **2022-09-28** v0.2.1
 * v0.3.x
   * **2022-08-13** v0.3.0
+* v1.x
+  * **2023-01-17** v1.0.0
 
 > **Tính năng**
 - Dễ dàng xây dựng template với twig

@@ -29,7 +29,7 @@ class FormURI extends \Twig\Extension\AbstractExtension
       new \Twig\TwigFunction('cancel_xss', [$this, 'cancel_xss']),
       new \Twig\TwigFunction('current_url', [$this, 'current_url']),
       new \Twig\TwigFunction('rwurl', [$this, 'rwurl']),
-
+      
       new \Twig\TwigFunction('tygia_sjc', [$this, 'tygia_sjc']),
     ];
   }
@@ -128,7 +128,7 @@ class FormURI extends \Twig\Extension\AbstractExtension
   /* TỶ GIÁ VÀNG SJC */
   function tygia_sjc($get_city = null, $type = null)
   {
-    $xml_url = 'https://tygiavang-sjc.stockage.workers.dev/xml/tygiavang.xml';
+    $xml_url = 'https://smm-src.stockage.workers.dev/?url=https://sjc.com.vn/xml/tygiavang.xml';
     $xml = simplexml_load_file($xml_url);
     $city = $xml->xpath('//city[@name="' . $get_city . '"]');
     $item = $city[0]->item;
@@ -169,5 +169,12 @@ class FormURI extends \Twig\Extension\AbstractExtension
       'buy' => $buy,
       'sell' => $sell
     ];
+/*
+    return [
+      'buy' => 51,
+      'sell' => 52
+    ];
+*/
   }
+  
 }

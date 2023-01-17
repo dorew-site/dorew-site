@@ -12,32 +12,11 @@
 
 defined('_DOREW') or die('Access denied');
 
-class SomeFilter extends \Twig\Extension\AbstractExtension
+class MatchRegex extends \Twig\Extension\AbstractExtension
 {
     public function getFilters()
     {
         return [
-            new \Twig\TwigFilter('array_unique', [$this, 'twig_array_unique']),
-
-            new \Twig\TwigFilter('get_keys', [$this, 'twig_get_keys']),
-            new \Twig\TwigFilter('rsort', [$this, 'twig_rsort']),
-            new \Twig\TwigFilter('asort', [$this, 'twig_asort']),
-            new \Twig\TwigFilter('ksort', [$this, 'twig_ksort']),
-            new \Twig\TwigFilter('arsort', [$this, 'twig_arsort']),
-            new \Twig\TwigFilter('krsort', [$this, 'twig_krsort']),
-            new \Twig\TwigFilter('shuffle', [$this, 'twig_shuffle']),
-
-            new \Twig\TwigFilter('md5', [$this, 'twig_md5']),
-            new \Twig\TwigFilter('sha1', [$this, 'twig_sha1']),
-            new \Twig\TwigFilter('htmlspecialchars', [$this, 'twig_htmlspecialchars']),
-
-            new \Twig\TwigFilter('truncate', [$this, 'twig_truncate']),
-
-            new \Twig\TwigFilter('json_decode', [$this, 'twig_json_decode']),
-            new \Twig\TwigFilter('url_decode', [$this, 'twig_url_decode']),
-            new \Twig\TwigFilter('ju_encode', [$this, 'twig_ju_encode']),
-            new \Twig\TwigFilter('ju_decode', [$this, 'twig_ju_decode']),
-
             new \Twig\TwigFilter('preg_quote', [$this, 'quote']),
             new \Twig\TwigFilter('preg_match', [$this, 'match']),
             new \Twig\TwigFilter('preg_get', [$this, 'get']),
@@ -51,15 +30,9 @@ class SomeFilter extends \Twig\Extension\AbstractExtension
             new \Twig\TwigFilter('line', [$this, 'line']),
             new \Twig\TwigFilter('less', [$this, 'less'], ['pre_escape' => 'html', 'is_safe' => ['html']]),
             new \Twig\TwigFilter('linkify', [$this, 'linkify'], ['pre_escape' => 'html', 'is_safe' => ['html']]),
-
-            new \Twig\TwigFilter('sum', [$this, 'sum']),
-            new \Twig\TwigFilter('product', [$this, 'product']),
-            new \Twig\TwigFilter('values', [$this, 'values']),
-            new \Twig\TwigFilter('as_array', [$this, 'asArray']),
-            new \Twig\TwigFilter('html_attr', [$this, 'htmlAttributes']),
         ];
     }
-
+    
     function twig_array_unique($array)
     {
         return array_unique($array);
@@ -70,7 +43,7 @@ class SomeFilter extends \Twig\Extension\AbstractExtension
      * sort and reverse are twig's two default filters
      * some other filters: get_keys, rsort, asort, ksort, arsort, krsort, shuffle
      */
-
+     
 
     function twig_get_keys($array)
     {
@@ -124,12 +97,12 @@ class SomeFilter extends \Twig\Extension\AbstractExtension
     {
         return sha1($text);
     }
-
+    
     function twig_htmlspecialchars($text)
     {
         return htmlspecialchars($text);
     }
-
+    
     /* --- TRUNCATE --- */
 
     function twig_truncate($string, int $start = 0, int $length = 0)
@@ -481,78 +454,5 @@ class SomeFilter extends \Twig\Extension\AbstractExtension
             return null;
         }
         return preg_split($pattern, $value);
-    }
-
-
-    /**
-     * Calculate the sum of values in an array
-     *
-     * @param array $array
-     * @return int
-     */
-    public function sum($array)
-    {
-        return isset($array) ? array_sum((array)$array) : null;
-    }
-
-
-    /**
-     * Calculate the product of values in an array
-     *
-     * @param array $array
-     * @return int
-     */
-    public function product($array)
-    {
-        return isset($array) ? array_product((array)$array) : null;
-    }
-
-
-    /**
-     * Return all the values of an array or object
-     *
-     * @param array|object $array
-     * @return array
-     */
-    public function values($array)
-    {
-        return isset($array) ? array_values((array)$array) : null;
-    }
-
-
-    /**
-     * Cast value to an array
-     *
-     * @param object|mixed $value
-     * @return array
-     */
-    public function asArray($value)
-    {
-        return is_object($value) ? get_object_vars($value) : (array)$value;
-    }
-
-
-    /**
-     * Cast an array to an HTML attribute string
-     *
-     * @param mixed $array
-     * @return string
-     */
-    public function htmlAttributes($array)
-    {
-        if (!isset($array)) {
-            return null;
-        }
-        $str = "";
-        foreach ($array as $key => $value) {
-            if (!isset($value) || $value === false) {
-                continue;
-            }
-            if ($value === true) {
-                $value = $key;
-            }
-            $str .= ' ' . $key . '="' . addcslashes($value, '"') . '"';
-        }
-        return trim($str);
     }
 }

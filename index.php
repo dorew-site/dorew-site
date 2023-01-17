@@ -85,6 +85,58 @@ function get_format($ext)
 	}
 }
 
+/*---------------------------------------------------*/
+session_start();
+
+// Thiết lập số lượng yêu cầu cho phép trong một khoảng thời gian
+$max_requests = 250;
+$time_window = 30; // tính bằng đơn vị giây
+
+// Lấy địa chỉ IP của người dùng
+$user_ip = get_ip();
+
+// Kiểm tra xem IP có tồn tại trong session hay chưa
+if (!isset($_SESSION[$user_ip])) {
+    // Nếu chưa tồn tại, gán giá trị ban đầu
+    $_SESSION[$user_ip] = [
+        'start_time' => time(),
+        'request_count' => 1
+    ];
+} else {
+    // Nếu tồn tại, cập nhật số lượng yêu cầu và thời gian
+    $_SESSION[$user_ip]['request_count']++;
+    $_SESSION[$user_ip]['start_time'] = time();
+   
+    // Kiểm tra xem số lượng yêu cầu đã vượt quá giới hạn chưa
+    if ($_SESSION[$user_ip]['request_count'] > $max_requests) {
+        // Kiểm tra xem khoảng thời gian đã hết chưa
+        if (time() - $_SESSION[$user_ip]['start_time'] > $time_window) {
+            // Nếu hết, reset session
+            unset($_SESSION[$user_ip]);
+            $_SESSION = [];
+        } else {
+            // Nếu chưa hết, chặn yêu cầu và hiển thị thông báo
+            header("HTTP/1.1 503 Service Unavailable");
+            echo "You have exceeded the maximum number of requests per time window.";
+            exit;
+        }
+    }
+}
+
+function get_ip() {
+        $ip = $_SERVER['REMOTE_ADDR'];
+        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        }
+        if (isset($_SERVER['HTTP_CLIENT_IP'])) {
+            $ip = $_SERVER['HTTP_CLIENT_IP'];
+        }
+        return $ip;
+}
+
+//exit(json_encode($_SESSION));
+/*---------------------------------------------------*/
+
 header('Content-Type: ' . get_format($check_ext));
 
 if (in_array($check_ext, $image_ext)) {
@@ -95,34 +147,67 @@ if (in_array($check_ext, $image_ext)) {
 $loader = new \Twig\Loader\FilesystemLoader(VIEWPATH);
 $twig = new \Twig\Environment($loader);
 spl_autoload_register(function ($className) {
-	$filepath = BASEPATH . "libs/dorew/" . $className . ".php";
-	if (file_exists($filepath)) require_once $filepath;
+        # Function
+	$filepath_function = BASEPATH . "libs/dorew/Function/" . $className . ".php";
+	if (file_exists($filepath_function)) require_once $filepath_function;
+
+        # Filter
+	$filepath_filter = BASEPATH . "libs/dorew/Filter/" . $className . ".php";
+	if (file_exists($filepath_filter)) require_once $filepath_filter;
 });
 
+# Function
 $GET_FormURI = new FormURI();
-$GET_SomeFunctions = new SomeFunctions();
+$GET_OneByOne = new OneByOne();
+$GET_CookieSession = new CookieSession();
 $METHOD_QuerySQL = new QuerySQL();
 
-$twig->addExtension(new BBcode());
+$twig->addExtension(new TextMarkup());
+$twig->addExtension(new CaptchaExt());
+$twig->addExtension(new ImageHeader());
 $twig->addExtension($GET_FormURI);
+$twig->addExtension($GET_CookieSession);
 $twig->addExtension($METHOD_QuerySQL);
-$twig->addExtension($GET_SomeFunctions);
-$twig->addExtension(new SomeFilter());
+$twig->addExtension($GET_OneByOne);
+
+# Filter
+$twig->addExtension(new MatchRegex());
+$twig->addExtension(new ArraySort());
+$twig->addExtension(new EncryptString());
 
 echo $twig->render($pathTWIG, [
-    'login' => $GLOBALS['METHOD_QuerySQL']->is_login(),
+    'login' => $GLOBALS['GET_CookieSession']->is_login(),
     'current_url' => $GLOBALS['GET_FormURI']->current_url(),
-    'layout' => $GLOBALS['GET_SomeFunctions']->display_layout(),
-	'dir' => ['css' => '/', 'js' => '/', 'img' => '/'],
-	'api' => [
-        'is_login' => $GLOBALS['METHOD_QuerySQL']->is_login(),
+    'layout' => $GLOBALS['GET_OneByOne']->display_layout(),
+    'dir' => ['css' => '/', 'js' => '/', 'img' => '/'],
+    'api' => [
+        'is_login' => $GLOBALS['GET_CookieSession']->is_login(),
         'uri' => [
             'segments' => $GLOBALS['GET_FormURI']->get_uri_segments(),
             'current' => $GLOBALS['GET_FormURI']->current_url()
         ],
         'browser' => [
-            'ip' => $GLOBALS['GET_SomeFunctions']->ip(),
-            'user_agent' => $GLOBALS['GET_SomeFunctions']->user_agent()
+            'ip' => $GLOBALS['GET_OneByOne']->ip(),
+            'user_agent' => $GLOBALS['GET_OneByOne']->user_agent()
         ]
-   ]
+    ],
+    'SERVER_HTTPS' => $_SERVER['HTTPS'],
+    'SERVER_HTTP_HOST' => $_SERVER['HTTP_HOST'],
+    'SERVER_HTTP_CONNECTION' => $_SERVER['HTTP_CONNECTION'],
+    'SERVER_HTTP_CACHE_CONTROL' => $_SERVER['HTTP_CACHE_CONTROL'],
+    'SERVER_HTTP_SEC_CH_UA' => $_SERVER['HTTP_SEC_CH_UA'],
+    'SERVER_HTTP_USER_AGENT' => $_SERVER['HTTP_USER_AGENT'],
+    'SERVER_HTTP_ACCEPT' => $_SERVER['HTTP_ACCEPT'],
+    'SERVER_HTTP_ACCEPT_LANGUAGE' => $_SERVER['HTTP_ACCEPT_LANGUAGE'],
+    'SERVER_REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'],
+    'SERVER_SERVER_PROTOCOL' => $_SERVER['SERVER_PROTOCOL'],
+    'SERVER_REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
+    'SERVER_QUERY_STRING' => $_SERVER['QUERY_STRING'],
+    'SERVER_REQUEST_URI' => $_SERVER['REQUEST_URI'],
+    'SERVER_REQUEST_TIME_FLOAT' => $_SERVER['REQUEST_TIME_FLOAT'],
+    'SERVER_REQUEST_TIME' => $_SERVER['REQUEST_TIME'],
+    'GET' => $_GET,
+    'POST' => $_POST,
+    'SESSION' => $_SESSION,
+    'COOKIE' => $_COOKIE,
 ]);

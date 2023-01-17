@@ -16,23 +16,26 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
 {
     public function __construct()
     {
-        global $db_host, $db_user, $db_pass, $db_name, $default_login;
-        $this->core_cookie = $default_login;
-        $this->db = new mysqli($db_host, $db_user, $db_pass, $db_name);
+        global $db_host, $db_user, $db_pass, $db_name;
         $this->conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
-        if (empty($this->db) || empty($this->conn)) {
+        if (empty($this->conn)) {
             //throw new Exception('Connect database failed');
             header('Location: /cms');
             exit();
         }
         if (!empty($this->conn)) {
-            mysqli_set_charset($this->conn, 'UTF8');
+            mysqli_set_charset($this->conn, 'utf8mb4');
         }
     }
 
     public function getFunctions()
     {
         return [
+            new \Twig\TwigFunction('db_query', [$this, 'db_query']),
+            new \Twig\TwigFunction('db_assoc', [$this, 'db_assoc']),
+            new \Twig\TwigFunction('db_num', [$this, 'db_num']),
+            new \Twig\TwigFunction('db_while', [$this, 'db_while']),
+
             new \Twig\TwigFunction('create_table', [$this, 'create_table']),
             new \Twig\TwigFunction('create_table_with_column', [$this, 'create_table_with_column']),
             new \Twig\TwigFunction('create_column_table', [$this, 'create_column_table']),
@@ -63,13 +66,6 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
             new \Twig\TwigFunction('select_table_row_data', [$this, 'select_table_row_data']),
 
             new \Twig\TwigFunction('search_key_in_table', [$this, 'search_key_in_table']),
-
-            new \Twig\TwigFunction('set_cookie', [$this, 'set_cookie']),
-            new \Twig\TwigFunction('delete_cookie', [$this, 'delete_cookie']),
-            new \Twig\TwigFunction('get_cookie', [$this, 'get_cookie']),
-            new \Twig\TwigFunction('is_login', [$this, 'is_login']),
-
-            new \Twig\TwigFunction('session', [$this, 'dsession']),
         ];
     }
 
@@ -81,31 +77,84 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
 
     /* --- QUERY AND PROCESS DATA IN TABLE --- */
 
-    function query($sql = null)
-    {
-        if (empty($sql)) {
-            return false;
-        }
-        $result = $this->db->query($sql);
-        if (!$result || $result === false) {
-            return false;
-        }
-        if ($result !== true) {
-            $this->$result = $result;
-        }
-        return true;
-    }
-
     function table_exists($table_name)
     {
         $sql = "SHOW TABLES LIKE '$table_name'";
-        $result = $this->db->query($sql);
-        if ($result->num_rows > 0) {
-            return true;
-        } else {
+        $query_sql = mysqli_query($this->conn, $sql);
+        $result = mysqli_fetch_all($query_sql, MYSQLI_ASSOC);
+        if (!$result || $result === false) {
             return false;
         }
+        if (count($result) > 0) {
+            return true;
+        }
+        return false;
     }
+
+    function db_query($sql, $params = [])
+    {
+        $stmt = mysqli_prepare($this->conn, $sql);
+        if (!empty($params)) {
+            $types = '';
+            foreach ($params as $param) {
+                if (is_int($param)) {
+                    $types .= 'i';
+                } elseif (is_double($param)) {
+                    $types .= 'd';
+                } else {
+                    $types .= 's';
+                }
+            }
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        }
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        mysqli_stmt_close($stmt);
+        return $result;
+    }
+
+    function db_assoc($sql, $params = [])
+    {
+        $query_sql = $this->db_query($sql, $params);
+        if (!$query_sql) {
+            return false;
+        }
+        $result = mysqli_fetch_assoc($query_sql);
+        if (!$result || $result === false) {
+            return false;
+        }
+        return $result;
+    }
+
+    function db_while($sql, $params = [])
+    {
+        $query_sql = $this->db_query($sql, $params);
+        if (!$query_sql) {
+            return false;
+        }
+        $result = [];
+        while ($row = mysqli_fetch_assoc($query_sql)) {
+            $result[] = $row;
+        }
+        if (!$result || $result === false) {
+            return false;
+        }
+        return $result;
+    }
+
+    function db_num($sql, $params = [])
+    {
+        $query_sql = $this->db_query($sql, $params);
+        if (!$query_sql) {
+            return false;
+        }
+        $result = mysqli_num_rows($query_sql);
+        if (!$result || $result === false) {
+            return false;
+        }
+        return $result;
+    }
+
 
     /* --- MANIPULATING TABLES --- */
 
@@ -128,8 +177,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 }
                 $sql .= "UNIQUE KEY (`id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-                mysqli_query($this->conn, $sql);
-                return 'Table `' . $table_name . '` created with your columns';
+                $query_sql = mysqli_query($this->conn, $sql);
+                if (isset($query_sql)) {
+                    return 'Table `' . $table_name . '` created with your columns';
+                } else {
+                    return false;
+                }
             } else {
                 return 'Table `' . $table_name . '` already exists';
             }
@@ -159,8 +212,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "DROP TABLE `$table_name`";
-                mysqli_query($this->conn, $sql);
-                return 'Table `' . $table_name . '` dropped';
+                $query_sql = mysqli_query($this->conn, $sql);
+                if (isset($query_sql)) {
+                    return 'Table `' . $table_name . '` dropped';
+                } else {
+                    return false;
+                }
             }
         }
     }
@@ -174,8 +231,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "RENAME TABLE `$table_name` TO `$new_table_name`";
-                mysqli_query($this->conn, $sql);
-                return 'Table `' . $table_name . '` renamed to `' . $new_table_name . '`';
+                $query_sql = mysqli_query($this->conn, $sql);
+                if (isset($query_sql)) {
+                    return 'Table `' . $table_name . '` renamed to `' . $new_table_name . '`';
+                } else {
+                    return false;
+                }
             }
         }
     }
@@ -183,10 +244,11 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
     function get_row_count($table_name = null, $where = null)
     {
         if (!$table_name) {
-            return 'There is not table_name in get_column_count()';
+            return 'There is not table_name in get_row_count()';
         } else {
             if (!$this->table_exists($table_name)) {
-                return 'Table `' . $table_name . '` does not exist';
+                //return 'Table `' . $table_name . '` does not exist';
+                return 0;
             } else {
                 $sql = "SELECT COUNT(*) FROM `$table_name`";
                 $sql_operator = ['>=', '<=', '>', '<', '=', '!='];
@@ -214,7 +276,7 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 }
                 $result = mysqli_query($this->conn, $sql);
                 $row = mysqli_fetch_row($result);
-                return $row[0] ? $row[0] : 0;
+                return isset($row[0]) ? $row[0] : 0;
             }
         }
     }
@@ -225,7 +287,8 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
             return 'There is not table_name in get_data_count_table()';
         } else {
             if (!$this->table_exists($table_name)) {
-                return 'Table `' . $table_name . '` does not exist';
+                //return 'Table `' . $table_name . '` does not exist';
+                return 0;
             } else {
                 return $this->get_row_count($table_name);
             }
@@ -241,8 +304,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "ALTER TABLE $table_name ADD $column_name $column_type";
-                mysqli_query($this->conn, $sql);
-                return 'Column ' . $column_name . ' in table `' . $table_name . '` created with type ' . $column_type;
+                $query_sql = mysqli_query($this->conn, $sql);
+                if (isset($query_sql)) {
+                    return 'Column ' . $column_name . ' in table `' . $table_name . '` created with type ' . $column_type;
+                } else {
+                    return false;
+                }
             }
         }
     }
@@ -257,8 +324,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "ALTER TABLE $table_name DROP $column_name";
-                mysqli_query($this->conn, $sql);
-                return 'Column ' . $column_name . ' in table `' . $table_name . '` dropped';
+                $query_sql = mysqli_query($this->conn, $sql);
+                if (isset($query_sql)) {
+                    return 'Column ' . $column_name . ' in table `' . $table_name . '` dropped';
+                } else {
+                    return false;
+                }
             }
         }
     }
@@ -276,8 +347,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                     $sql .= "`$key` = '$value', ";
                 }
                 $sql = substr($sql, 0, -2);
-                mysqli_query($this->conn, $sql);
-                return 'Rows in table `' . $table_name . '` created';
+                $query_sql = mysqli_query($this->conn, $sql);
+                if (isset($query_sql)) {
+                    return 'Rows in table `' . $table_name . '` created';
+                } else {
+                    return false;
+                }
             }
         }
     }
@@ -296,31 +371,27 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
         }
     }
 
-    function select_table_limit_offset($table_name = null,  $limit, $offset, $order = null, $sort = null)
+    function select_table_limit_offset($table_name = null,  $limit = 10, $offset = 0, $order = 'id', $sort = 'ASC')
     {
-        if (!$order) $order = 'id';
-        if (!$sort) $sort = 'ASC';
         if (!$table_name) {
-            return 'There is not table_name or limit or offset in select_table_data()';
+            return 'There is not table_name or limit or offset in select_table_limit_offset()';
         } else {
             if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
-                $sql = "SELECT * FROM $table_name ORDER BY $order $sort LIMIT $limit OFFSET $offset";
-                $query = mysqli_query($this->conn, $sql);
-                $rows = [];
-                while ($row = mysqli_fetch_assoc($query)) {
-                    $rows[] = $row;
+                $sql = "SELECT * FROM $table_name ORDER BY $order $sort LIMIT ? OFFSET ?";
+                $query = $this->db_while($sql, [$limit, $offset]);
+                if (isset($query) && count($query) >= 1) {
+                    return $query;
+                } else {
+                    return false;
                 }
-                return $rows;
             }
         }
     }
 
-    function select_table_data($table_name = null, $order = null, $sort = null)
+    function select_table_data($table_name = null, $order = 'id', $sort = 'ASC')
     {
-        if (!$order) $order = 'id';
-        if (!$sort) $sort = 'ASC';
         if (!$table_name) {
             return 'There is not table_name in select_table_data()';
         } else {
@@ -328,12 +399,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "SELECT * FROM $table_name ORDER BY $order $sort";
-                $query = mysqli_query($this->conn, $sql);
-                $rows = [];
-                while ($row = mysqli_fetch_assoc($query)) {
-                    $rows[] = $row;
+                $query = $this->db_while($sql);
+                if (isset($query) && count($query) >= 1) {
+                    return $query;
+                } else {
+                    return false;
                 }
-                return $rows;
             }
         }
     }
@@ -354,13 +425,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 if ($other_sql) {
                     $sql .= " $other_sql";
                 }
-                $query = mysqli_query($this->conn, $sql);
-                $rows = [];
-                while ($row = mysqli_fetch_assoc($query)) {
-                    $rows[] = $row;
+                $query = $this->db_while($sql);
+                if (isset($query) && count($query) >= 1) {
+                    return $query;
+                } else {
+                    return false;
                 }
-                //return $sql;
-                return $rows;
             }
         }
     }
@@ -382,8 +452,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                     if ($other_sql) {
                         $sql .= " $other_sql";
                     }
-                    mysqli_query($this->conn, $sql);
-                    return 'Rows in table `' . $table_name . '` updated';
+                    $query_sql = mysqli_query($this->conn, $sql);
+                    if (isset($query_sql)) {
+                        return 'Rows in table `' . $table_name . '` updated';
+                    } else {
+                        return false;
+                    }
                 } else {
                     return 'There is not array_row in query_update_table()';
                 }
@@ -412,8 +486,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 }
                 $sql = substr($sql, 0, -2);
                 $sql .= " WHERE `$where_column_name` = '$where_column_value'";
-                mysqli_query($this->conn, $sql);
-                return 'Rows in table `' . $table_name . '` updated';
+                $query_sql = mysqli_query($this->conn, $sql);
+                if (isset($query_sql)) {
+                    return 'Rows in table `' . $table_name . '` updated';
+                } else {
+                    return false;
+                }
             }
         }
     }
@@ -441,8 +519,12 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 return 'Table `' . $table_name . '` does not exist';
             } else {
                 $sql = "DELETE FROM $table_name WHERE $column_name = $column_value";
-                mysqli_query($this->conn, $sql);
-                return 'Rows in table `' . $table_name . '` deleted';
+                $query_sql = mysqli_query($this->conn, $sql);
+                if (isset($query_sql)) {
+                    return 'Rows in table `' . $table_name . '` deleted';
+                } else {
+                    return false;
+                }
             }
         }
     }
@@ -502,16 +584,11 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                         }
                     }
                 }
-                //return $sql;
-                $query = mysqli_query($this->conn, $sql);
-                $rows = [];
-                while ($row = mysqli_fetch_assoc($query)) {
-                    $rows[] = $row;
-                }
+                $query = $this->db_while($sql);
                 if ($count == 'count') {
-                    return count($rows) ? count($rows) : 0;
+                    return count($query) ? count($query) : 0;
                 } else {
-                    return $rows;
+                    return $query;
                 }
             }
         }
@@ -595,23 +672,21 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
         }
     }
 
-    function select_table_where_data_limit_offset($table_name = null, $where_column_name, $where_column_value, $limit, $offset, $order = null, $sort = null)
+    function select_table_where_data_limit_offset($table_name = null, $where_column_name, $where_column_value, $limit = 10, $offset = 0, $order = 'id', $sort = 'ASC')
     {
-        if (!$order) $order = 'id';
-        if (!$sort) $sort = 'ASC';
         if (!$table_name) {
-            return 'There is not table_name in select_table_data()';
+            return 'There is not table_name in select_table_where_data_limit_offset()';
         } else {
             if (!$this->table_exists($table_name)) {
                 return 'Table `' . $table_name . '` does not exist';
             } else {
-                $sql = "SELECT * FROM $table_name WHERE $where_column_name = $where_column_value ORDER BY $order $sort LIMIT $limit OFFSET $offset";
-                $query = mysqli_query($this->conn, $sql);
-                $rows = [];
-                while ($row = mysqli_fetch_assoc($query)) {
-                    $rows[] = $row;
+                $sql = "SELECT * FROM $table_name WHERE $where_column_name = ? ORDER BY $order $sort LIMIT ? OFFSET ?";
+                $query = $this->db_while($sql, [$where_column_value, $limit, $offset]);
+                if (isset($query) && count($query) >= 1) {
+                    return $query;
+                } else {
+                    return false;
                 }
-                return $rows;
             }
         }
     }
@@ -627,15 +702,13 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 $sql = "SELECT * FROM $table_name WHERE $column_name = '$column_value'";
                 $query = mysqli_query($this->conn, $sql);
                 $row = mysqli_fetch_assoc($query);
-                return $row;
+                return isset($row) ? $row : false;
             }
         }
     }
 
-    function select_table_where_data($table_name = null, $where_column_name = null, $where_column_value = null, $order = null, $sort = null)
+    function select_table_where_data($table_name = null, $where_column_name = null, $where_column_value = null, $order = 'id', $sort = 'ASC')
     {
-        if (!$order) $order = 'id';
-        if (!$sort) $sort = 'ASC';
         if (!$table_name || !$where_column_name || !$where_column_value) {
             return 'There is not table_name or where_column_name or where_column_value in select_table_where_data()';
         } else {
@@ -689,68 +762,6 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                 }
                 return $rows;
             }
-        }
-    }
-
-    /*
-    -----------------------------------------------------------------
-    Manipulation of Cookies
-    -----------------------------------------------------------------
-    */
-
-    function set_cookie($name, $value)
-    {
-        setcookie($name, $value, time() + 3600 * 24 * 365, '/');
-        return;
-    }
-
-    function delete_cookie($name)
-    {
-        setcookie($name, '', time() - 3600 * 24 * 365, '/');
-        unset($_COOKIE[$name]);
-        return;
-    }
-
-    function get_cookie($name)
-    {
-        if (!$_COOKIE[$name]) return false;
-        return $_COOKIE[$name];
-    }
-
-    function is_login()
-    {
-        $table_name = 'users';
-        $core_cookie = $this->core_cookie;
-        $token = $this->get_cookie($core_cookie) ? $this->get_cookie($core_cookie) : 'bot';
-        $data = $this->select_table_row_data($table_name, 'auto', $token);
-        if ($data) {
-            return $data['nick'];
-        } else {
-            return false;
-        }
-    }
-
-    function dsession($name = null, $value = null, $type = null)
-    {
-        switch ($type) {
-            case 'start':
-                session_start();
-                break;
-            case 'destroy':
-                session_destroy();
-                break;
-            case 'set':
-                $_SESSION[$name] = $value;
-                break;
-            case 'delete':
-                unset($_SESSION[$name]);
-                break;
-            case 'get':
-                return $_SESSION[$name];
-                break;
-            default:
-                if (!$_SESSION[$name] || !$name) return false;
-                return $_SESSION[$name];
         }
     }
 }

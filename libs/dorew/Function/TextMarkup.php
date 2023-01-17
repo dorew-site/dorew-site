@@ -12,13 +12,14 @@
 
 defined('_DOREW') or die('Access denied');
 
-class BBcode extends \Twig\Extension\AbstractExtension
+class TextMarkup extends \Twig\Extension\AbstractExtension
 {
 
     public function getFunctions()
     {
         return [
             new \Twig\TwigFunction('bb_code_system', [$this, 'bb_code']),
+            new \Twig\TwigFunction('bb_simple_system', [$this, 'bb_simple']),
             new \Twig\TwigFunction('bb_url_system', [$this, 'bb_url']),
         ];
     }
@@ -143,5 +144,34 @@ class BBcode extends \Twig\Extension\AbstractExtension
         );
 
         return $text;
+    }
+
+    public static function bb_simple($text)
+    {
+        $search = [
+            '~\[quote\](.+?)\[/quote\]~s',
+            '~\[color=(.+)\](.+?)\[/color\]~s',
+            '~\[bcolor=(.+)\](.+?)\[/bcolor\]~s',
+            '~\[red\](.+)\[/red\]~s',
+            '~\[blue\](.+)\[/blue\]~s',
+            '~\[green\](.+)\[/green\]~s',
+            '~\[center\](.+)\[/center\]~s',
+            '~\[left\](.+)\[/left\]~s',
+            '~\[right\](.+)\[/right\]~s',
+            '~\[d\](.+)\[/d\]~s',
+        ];
+        $replace = [
+            '<blockquote>$1</blockquote>',
+            '<span style="color:$1;">$2</span>',
+            '<span style="color:$1;font-weight:700">$2</span>',
+            '<span style="color:red;">$1</span>',
+            '<span style="color:blue;">$1</span>',
+            '<span style="color:green;">$1</span>',
+            '<div style="text-align:center;">$1</div>',
+            '<div style="text-align:left;">$1</div>',
+            '<div style="text-align:right;">$1</div>',
+            '<center><a href="$1"><button class="btn btn-primary"><i class="fa fa-download"></i> Download</button></a></center>',
+        ];
+        return preg_replace($search, $replace, $text);
     }
 }

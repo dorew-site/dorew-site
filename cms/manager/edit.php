@@ -96,7 +96,7 @@ if (is_login()) {
             echo '
             <div class="menu">
                 <form action="" method="post">
-                    <textarea id="code" name="contents" style="width: 100%; min-height: 200px" rows="35">' . htmlspecialchars($old_code) . '</textarea>
+                    <textarea id="code" name="contents" style="width: 100%; min-height: 200px" rows="'. $rows_code . '">' . htmlspecialchars($old_code) . '</textarea>
                         <p style="text-align:center">
                             <button type="submit" name="submit" class="button">Cập nhật</button>
                         </p>

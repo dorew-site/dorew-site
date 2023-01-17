@@ -29,7 +29,7 @@ if (is_login()) {
             if (!empty($file['name'])) {
                 $file_name = $file['name'];
                 $file_tmp = $file['tmp_name'];
-                $maxSizeAllow = 10485760; //10MB
+                $maxSizeAllow = '10485760'; //10MB
                 $file_size = $file['size'];
                 $file_error = $file['error'];
                 $ext_allow = array('zip');
@@ -163,7 +163,7 @@ if (is_login()) {
                                 <b><i class="fa fa-file-archive-o" aria-hidden="true"></i> ' . $file_name . '</b>
                                 <br/><a href="?file=' . $file_name . '&act=use" title="Sử dụng Template này"><i class="fa fa-check-circle" aria-hidden="true"></i> Sử dụng</a> | 
                                 <a href="?file=' . $file_name . '&act=del" title="Xóa Template này" style="color:red"><i class="fa fa-trash" aria-hidden="true"></i> Xóa</a> | 
-                                <a href="/cms/manager/download.php?get='. $file_name. '" title="Tải Template này" style="color:green"><i class="fa fa-download" aria-hidden="true"></i> Tải về</a>
+                                <a href="/cms/manager/download.php?get=' . $file_name . '" title="Tải Template này" style="color:green"><i class="fa fa-download" aria-hidden="true"></i> Tải về</a>
                             </td>
                             <td style="width:40%;text-align:right">
                                 <b>' . $file_size . '</b>
