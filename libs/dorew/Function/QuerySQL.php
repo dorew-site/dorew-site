@@ -136,7 +136,7 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
         while ($row = mysqli_fetch_assoc($query_sql)) {
             $result[] = $row;
         }
-        if (!$result || $result === false) {
+        if (!$result || $result === false || (count($result) - 1) <= 0) {
             return false;
         }
         return $result;
