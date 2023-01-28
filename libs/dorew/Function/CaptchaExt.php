@@ -15,10 +15,10 @@ defined('_DOREW') or die('Access denied');
 class CaptchaExt extends \Twig\Extension\AbstractExtension
 {
 
-    public function __construct()
+    public function __construct($g_site_key = null, $g_secret_key = null)
     {
-        $this->site_key = '6LerhaYbAAAAAG5MsOgY6w7cjbvJjU61hGfPqSRU';
-        $this->secret_key = '6LerhaYbAAAAAF_qswE64H5DdqoukhAhKnxd6nrQ';
+        $this->site_key = $g_site_key;
+        $this->secret_key = $g_secret_key;
     }
 
     public function getFunctions()

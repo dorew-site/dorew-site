@@ -15,6 +15,12 @@ defined('_DOREW') or die('Access denied');
 class FormURI extends \Twig\Extension\AbstractExtension
 {
 
+  public function __construct()
+  {
+      global $sjc_gold;
+      $this->sjc_gold = $sjc_gold;
+  }
+
   public function getFunctions()
   {
     return [
@@ -97,38 +103,10 @@ class FormURI extends \Twig\Extension\AbstractExtension
     return $url;
   }
 
-  function rwurl($string)
-  {
-    $string = strtolower($string);
-    //bỏ dấu tiếng việt
-    $string = preg_replace("/(à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ)/", 'a', $string);
-    $string = preg_replace("/(è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ)/", 'e', $string);
-    $string = preg_replace("/(ì|í|ị|ỉ|ĩ)/", 'i', $string);
-    $string = preg_replace("/(ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ)/", 'o', $string);
-    $string = preg_replace("/(ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ)/", 'u', $string);
-    $string = preg_replace("/(ỳ|ý|ỵ|ỷ|ỹ)/", 'y', $string);
-    $string = preg_replace("/(đ)/", 'd', $string);
-    $string = preg_replace("/(À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ)/", 'A', $string);
-    $string = preg_replace("/(È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ)/", 'E', $string);
-    $string = preg_replace("/(Ì|Í|Ị|Ỉ|Ĩ)/", 'I', $string);
-    $string = preg_replace("/(Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ)/", 'O', $string);
-    $string = preg_replace("/(Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ)/", 'U', $string);
-    $string = preg_replace("/(Ỳ|Ý|Ỵ|Ỷ|Ỹ)/", 'Y', $string);
-    $string = preg_replace("/(Đ)/", 'D', $string);
-    //xoá toàn bộ ký tự đặc biệt
-    $string = preg_replace("/[^a-z0-9_\s-]/", "", $string);
-    //xoá khoảng trắng thừa
-    $string = trim(preg_replace("/[\s-]+/", " ", $string));
-    //thay thế khoảng trắng bằng ký tự -
-    $string = preg_replace("/[\s-]/", "-", $string);
-    $string = mb_strtolower($string, 'utf8');
-    return $string;
-  }
-
   /* TỶ GIÁ VÀNG SJC */
   function tygia_sjc($get_city = null, $type = null)
   {
-    $xml_url = 'https://smm-src.stockage.workers.dev/?url=https://sjc.com.vn/xml/tygiavang.xml';
+    $xml_url = $this->sjc_gold;
     $xml = simplexml_load_file($xml_url);
     $city = $xml->xpath('//city[@name="' . $get_city . '"]');
     $item = $city[0]->item;
@@ -169,12 +147,5 @@ class FormURI extends \Twig\Extension\AbstractExtension
       'buy' => $buy,
       'sell' => $sell
     ];
-/*
-    return [
-      'buy' => 51,
-      'sell' => 52
-    ];
-*/
   }
-  
 }

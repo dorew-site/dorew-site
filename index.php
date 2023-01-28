@@ -86,11 +86,52 @@ function get_format($ext)
 }
 
 /*---------------------------------------------------*/
+$allowed_bots = ['googlebot', 'bingbot', 'yandexbot'];
+$allowed_domain = ['dorew.org','dorew.ovh'];
+$current_ua = $_SERVER['HTTP_USER_AGENT'];
+$current_url = (((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+if (strtolower($_SERVER['HTTP_HOST']) == 'dorew.ovh') $_SERVER['HTTP_REFERER'] = $current_url;
+$referer = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST);
+
+function fairPlay() {
+  global $allowed_bots, $allowed_domain, $current_ua, $referer;
+  $current_domain = $_SERVER['HTTP_HOST'];
+  $bot_name = getBotName();
+  if (
+    !in_array($_SERVER['HTTP_HOST'], $allowed_domain) && !in_array($bot_name, $allowed_bots) && !in_array($referer, $allowed_domain) 
+    || isset($current_ua) && preg_match('/curl|libcurl|cron/i', $current_ua)
+    || PHP_SAPI == 'cli'
+  ) {
+    header('HTTP/1.1 403 Forbidden'); exit;
+  } else {
+    header("Access-Control-Allow-Origin: https://dorew.org");
+    header("Access-Control-Allow-Origin: https://dorew.ovh");
+    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
+  }
+}
+
+function getBotName() {
+  $user_agent = $_SERVER['HTTP_USER_AGENT'];
+  if (strpos($user_agent, 'Googlebot') !== false) {
+    return 'googlebot';
+  } elseif (strpos($user_agent, 'Bingbot') !== false) {
+    return 'bingbot';
+  } elseif (strpos($user_agent, 'Yandexbot') !== false) {
+    return 'yandexbot';
+  } else {
+    return false;
+  }
+}
+
+fairPlay();
+/*---------------------------------------------------*/
+/*
 session_start();
 
 // Thiết lập số lượng yêu cầu cho phép trong một khoảng thời gian
-$max_requests = 250;
-$time_window = 30; // tính bằng đơn vị giây
+$max_requests = 100;
+$time_window = 5; // tính bằng đơn vị giây
 
 // Lấy địa chỉ IP của người dùng
 $user_ip = get_ip();
@@ -110,17 +151,21 @@ if (!isset($_SESSION[$user_ip])) {
     // Kiểm tra xem số lượng yêu cầu đã vượt quá giới hạn chưa
     if ($_SESSION[$user_ip]['request_count'] > $max_requests) {
         // Kiểm tra xem khoảng thời gian đã hết chưa
-        if (time() - $_SESSION[$user_ip]['start_time'] > $time_window) {
+        if (time() - $_SESSION[$user_ip]['start_time'] > ($time_window + 86400)) {
             // Nếu hết, reset session
             unset($_SESSION[$user_ip]);
             $_SESSION = [];
         } else {
             // Nếu chưa hết, chặn yêu cầu và hiển thị thông báo
-            header("HTTP/1.1 503 Service Unavailable");
-            echo "You have exceeded the maximum number of requests per time window.";
+            header('HTTP/1.1 403 Forbidden');
             exit;
         }
     }
+}
+
+if (count($_SESSION) > 15) {
+    header('HTTP/1.1 403 Forbidden');
+    exit;
 }
 
 function get_ip() {
@@ -133,6 +178,7 @@ function get_ip() {
         }
         return $ip;
 }
+*/
 
 //exit(json_encode($_SESSION));
 /*---------------------------------------------------*/
@@ -144,8 +190,16 @@ if (in_array($check_ext, $image_ext)) {
 	exit;
 }
 
+use Twig\Extra\Intl\IntlExtension;
+use Twig\Extra\String\StringExtension;
+
 $loader = new \Twig\Loader\FilesystemLoader(VIEWPATH);
 $twig = new \Twig\Environment($loader);
+
+# String query Ext
+$twig->addExtension(new IntlExtension());
+$twig->addExtension(new StringExtension());
+
 spl_autoload_register(function ($className) {
         # Function
 	$filepath_function = BASEPATH . "libs/dorew/Function/" . $className . ".php";
@@ -163,7 +217,7 @@ $GET_CookieSession = new CookieSession();
 $METHOD_QuerySQL = new QuerySQL();
 
 $twig->addExtension(new TextMarkup());
-$twig->addExtension(new CaptchaExt());
+$twig->addExtension(new CaptchaExt($g_site_key, $g_secret_key));
 $twig->addExtension(new ImageHeader());
 $twig->addExtension($GET_FormURI);
 $twig->addExtension($GET_CookieSession);

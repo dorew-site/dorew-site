@@ -15,7 +15,7 @@ defined('_DOREW') or die('Access denied');
 $root = $_SERVER['DOCUMENT_ROOT'];
 $http_host = $_SERVER['HTTP_HOST'];
 $request_uri = $_SERVER['REQUEST_URI'];
-$current_version = '1.0.0';
+$current_version = '1.0.1';
 
 $php_server = strtolower($_SERVER['SERVER_SOFTWARE']);
 if (strpos($php_server, 'nginx') !== false) {
@@ -43,3 +43,10 @@ $default_404 = '_404';
 $default_login = 'dorew';
 $dir_backup = $root.'/assets/template/backup';
 $dir_tpl = $root.'/assets/template/get';
+
+//recaptcha google
+$g_site_key = '6LerhaYbAAAAAG5MsOgY6w7cjbvJjU61hGfPqSRU';
+$g_secret_key = '6LerhaYbAAAAAF_qswE64H5DdqoukhAhKnxd6nrQ';
+
+//sjc gold
+$sjc_gold = 'https://SITE_NAME.workers.dev/?url=https://sjc.com.vn/xml/tygiavang.xml';
