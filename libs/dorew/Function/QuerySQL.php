@@ -132,14 +132,8 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
         if (!$query_sql) {
             return false;
         }
-        $result = [];
-        while ($row = mysqli_fetch_assoc($query_sql)) {
-            $result[] = $row;
-        }
-        if (!$result || $result === false || (count($result) - 1) <= 0) {
-            return false;
-        }
-        return $result;
+        $result = mysqli_fetch_all($query_sql, MYSQLI_ASSOC);
+        return (!$result || $result === false || (count($result)) <= 0) ? false : $result;
     }
 
     function db_num($sql, $params = [])
@@ -659,10 +653,7 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                     }
                 }
                 $query = mysqli_query($this->conn, $sql);
-                $rows = [];
-                while ($row = mysqli_fetch_assoc($query)) {
-                    $rows[] = $row;
-                }
+                $rows = mysqli_fetch_all($query, MYSQLI_ASSOC);
                 if ($count == 'count') {
                     return count($rows) ? count($rows) : 0;
                 } else {
@@ -717,10 +708,7 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
             } else {
                 $sql = "SELECT * FROM $table_name WHERE $where_column_name = '$where_column_value' ORDER BY $order $sort";
                 $query = mysqli_query($this->conn, $sql);
-                $rows = [];
-                while ($row = mysqli_fetch_assoc($query)) {
-                    $rows[] = $row;
-                }
+                $rows = mysqli_fetch_all($query, MYSQLI_ASSOC);
                 $total = ['total' => $rows ? count($rows) : 0];
                 return array_merge($total, $rows);
             }
@@ -756,10 +744,7 @@ class QuerySQL extends \Twig\Extension\AbstractExtension
                     $sql .= " ORDER BY RAND() LIMIT $random";
                 }
                 $query = mysqli_query($this->conn, $sql);
-                $rows = [];
-                while ($row = mysqli_fetch_assoc($query)) {
-                    $rows[] = $row;
-                }
+                $rows = mysqli_fetch_all($query, MYSQLI_ASSOC);
                 return $rows;
             }
         }
